@@ -3,7 +3,7 @@
 ## Clonar
 
 ```bash
-git clone https://github.com/Gabriel-Kihara/Trabalho_de_ES.git
+git clone https://github.com/kauanschiavon/Harmonic.git
 cd crud-harmonic
 ```
 
