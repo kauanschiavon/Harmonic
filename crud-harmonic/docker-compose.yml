@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: ./backend
+
+    container_name: harmonic-backend
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - ./backend/.env
+
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
