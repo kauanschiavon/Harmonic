@@ -1,5 +1,5 @@
-import { db } from "../../../../../Harmonic/crud-harmonic/backend/src/database/connection";
-import { User } from "../../../../../Harmonic/crud-harmonic/backend/src/models/User";
+import { db } from "../database/connection";
+import { User } from "../models/User";
 
 export class UserRepository {
 
