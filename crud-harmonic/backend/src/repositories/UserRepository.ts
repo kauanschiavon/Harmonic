@@ -1,7 +1,10 @@
+import { isAwaitKeyword } from "typescript";
 import { db } from "../database/connection";
 import { User } from "../models/User";
 
 export class UserRepository {
+
+    
 
     async create(user: User) {
 
@@ -13,6 +16,18 @@ export class UserRepository {
 
         return await db("users").select("*");
 
+    }
+
+    async findByEmail(email: string){
+        return await db("users")
+        .where({email})
+        .first();
+    }
+
+    async findByUsername(username: string){
+        return await db("users")
+        .where({username})
+        .first();
     }
 
     async update(id: number, data: Partial<User>) {
@@ -29,3 +44,4 @@ export class UserRepository {
             .delete();
     }
 }
+

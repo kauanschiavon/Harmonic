@@ -1,19 +1,32 @@
 import { Request, Response } from "express";
 import { UserRepository } from "../repositories/UserRepository";
+import { AuthService } from "../services/authservice";
 
 const repository = new UserRepository();
 
 export class UserController {
 
+
     async create(req: Request, res: Response) {
+        try {
 
-        const user = req.body;
+            const user =
+                await AuthService.register(req.body);
 
-        await repository.create(user);
+            return res.status(201).json(user);
 
-        return res.status(201).json({
-            message: "Usuário criado"
-        });
+        } catch (error) {
+
+            if (error instanceof Error) {
+                return res.status(400).json({
+                    message: error.message
+                });
+            }
+
+            return res.status(500).json({
+                message: "Erro interno do servidor"
+            });
+        }
     }
 
     async findAll(req: Request, res: Response) {
