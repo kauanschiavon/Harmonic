@@ -8,9 +8,18 @@ export class UserRepository {
 
     async create(user: User) {
 
-        await db("users").insert(user);
+    const [createdUser] = await db("users")
+        .insert(user)
+        .returning([
+            "id",
+            "username",
+            "email",
+            "bio",
+            "photo_url"
+        ]);
 
-    }
+    return createdUser;
+}
 
     async findAll() {
 

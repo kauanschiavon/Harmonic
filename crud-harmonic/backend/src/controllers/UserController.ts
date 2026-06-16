@@ -36,6 +36,7 @@ export class UserController {
         return res.json(users);
     }
 
+
     async update(req: Request, res: Response) {
         const { id } = req.params;
 
@@ -46,6 +47,24 @@ export class UserController {
             message: "Usuário atualizado"
         });
     }
+    async login(req: Request, res: Response) {
+    try {
+
+        const result =
+            await AuthService.login(req.body);
+
+        return res.status(200).json(result);
+
+    } catch (error) {
+
+        return res.status(400).json({
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "Erro interno"
+        });
+    }
+}
     
     async delete(req: Request, res: Response) {
         const { id } = req.params;
