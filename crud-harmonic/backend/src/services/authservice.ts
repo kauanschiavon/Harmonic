@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { registerSchema } from "../schemas/AuthSchema";
 import { UserRepository } from "../repositories/UserRepository";
 import jwt from "jsonwebtoken";
+import { resolve } from "node:dns";
 
 export class AuthService {
   static async register(data: any) {
@@ -39,11 +40,14 @@ export class AuthService {
     const user = await userRepository.create({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: "user"
     });
      
     const token = jwt.sign(
-        {id: user.id},
+        {id: user.id,
+        role: user.role
+        },
         process.env.JWT_SECRET!,
         {expiresIn: "7d"}
         );
@@ -52,7 +56,7 @@ export class AuthService {
 
     return {user, token};
   }
-  
+
    static async login(data: any) {
 
     const { email, password } = data;
