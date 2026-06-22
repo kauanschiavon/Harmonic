@@ -1,16 +1,23 @@
 import { memoryUsage } from "node:process";
-import { z } from "zod";
+import { coerce, z } from "zod";
 
 
+//validação
 export const reviewSchema = z.object({
 
-    music_id: z
-    .string()
-    .optional,
+    user_id:z
+    .coerce
+    .number(),
 
-    artist_id: z
+    music_spotify_id: z
+    .coerce
     .string()
-    .optional,
+    .optional(),
+
+    artist_spotify_id: z
+    .coerce
+    .string()
+    .optional(),
 
     text: z
     .string()
@@ -20,5 +27,6 @@ export const reviewSchema = z.object({
     .number()
     .min(1)
     .max(5)
+    .multipleOf(1000)
 })
 

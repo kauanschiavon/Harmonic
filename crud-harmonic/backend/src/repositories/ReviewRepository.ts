@@ -1,13 +1,12 @@
-import { number } from "zod";
 import { db } from "../database/connection";
-import { Review } from "../models/User";
-import { partial } from "zod/mini";
-import { resourceUsage } from "node:process";
+import { Review } from "../models/Review";
 
 export class ReviewRepository {
+
   async create(review: Review) {
     return await db("reviews")
-    .insert(review);
+    .insert(review)
+    .returning("*");
   }
 
   async findAll() {
@@ -27,7 +26,7 @@ export class ReviewRepository {
     .update(data);
 
   }
-  
+
   async delete(id: number) {
     return await db("reviews")
     .where({ id })
