@@ -1,6 +1,6 @@
 import express from "express";
-
-import router from "./routes/UserRoutes";
+import reviewrouter from "./routes/ReviewRoutes"
+import userrouter from "./routes/UserRoutes";
 
 import "dotenv/config";
 
@@ -8,7 +8,9 @@ const app = express();
 
 app.use(express.json());
 
-app.use(router);
+app.use(userrouter);
+app.use(reviewrouter);
+
 
 app.get("/", (req, res) => {
     return res.status(200).json("Olá Mundo!");
