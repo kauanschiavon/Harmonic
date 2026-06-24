@@ -65,6 +65,7 @@ export class UserController {
         });
     }
 }
+
     
     async delete(req: Request, res: Response) {
         const { id } = req.params;
@@ -75,4 +76,37 @@ export class UserController {
             message: "Usuário deletado"
         });
     }
+
+    // ----------esquecer senha---------------:
+
+        async forgotPassword(req: Request, res: Response){
+        try{
+             await AuthService.forgotPassword(req.body);
+
+             return res.status(200).json({ message: "Se esse email estiver cadastrado receberá instruções em breve.",});
+
+        } catch (error){
+            if(error instanceof Error){
+                return res.status(400).json({message: error.message})
+            }
+            return res.status(500).json({message: "Erro interno do servidor"})
+        }
+    }
+
+
+    // ----------trocar senha----------
+
+    async resetPassword(req: Request, res: Response){
+        try{
+            await AuthService.resetPassword(req.body);
+            return res.status(200).json({message: "senha redefinida com sucesso"})
+
+        } catch (error){
+            if(error instanceof Error){
+                return res.status(400).json ({message: error.message})
+            }
+            return res.status(500).json({message: "Erro interno do Servidor"})
+        }
+    }
+
 }

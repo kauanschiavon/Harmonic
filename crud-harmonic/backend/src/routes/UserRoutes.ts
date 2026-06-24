@@ -51,6 +51,10 @@ router.post("/users", controller.create);
 
 router.post("/login", controller.login)
 
+router.post("/forgot-password", controller.forgotPassword)
+
+router.post("/reset-password", controller.resetPassword)
+
 router.get("/users", controller.findAll);
 
 router.patch("/users/:id", controller.update);

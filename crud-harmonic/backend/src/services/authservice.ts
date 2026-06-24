@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import { resolve } from "node:dns";
 
 export class AuthService {
+
+
   static async register(data: any) {
 
     // 1. validação
@@ -57,6 +59,8 @@ export class AuthService {
     return {user, token};
   }
 
+
+
    static async login(data: any) {
 
     const { email, password } = data;
@@ -88,5 +92,12 @@ export class AuthService {
       user,
       token
     };
+  }
+  static async forgotPassowrd(data:any){
+    
+  }
+
+  static async resetPassword(data:any){
+
   }
 }
