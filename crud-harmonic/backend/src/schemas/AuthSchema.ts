@@ -1,8 +1,6 @@
 import { email, z } from "zod";
 
-//se um dia for alterado.
-const tamSenha = 8;
-const tamEmail = 6;
+
 
 export const registerSchema = z.object({
   username: z
@@ -17,5 +15,5 @@ export const registerSchema = z.object({
 
   password: z
     .string()
-    .min(tamSenha, `senha deve ter no minimo" ${tamSenha} "caracteres`),
+    .min(8, `senha deve ter no minimo 8 caracteres`),
 });

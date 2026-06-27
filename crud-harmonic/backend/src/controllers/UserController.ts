@@ -77,7 +77,7 @@ export class UserController {
         });
     }
 
-    // ----------esquecer senha---------------:
+    // ----------esquecer senha(dispara email)---------------:
 
         async forgotPassword(req: Request, res: Response){
         try{
