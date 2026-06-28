@@ -14,8 +14,8 @@ export class ReviewService {
             reviewSchema.parse(data);
 
         if (
-            !validatedData.music_spotify_id &&
-            !validatedData.artist_spotify_id
+            !validatedData.music_id &&
+            !validatedData.artist_id
         ) {
             throw new Error(
                 "Informe music_id ou artist_id"
