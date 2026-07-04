@@ -1,7 +1,7 @@
 import express from "express";
 import reviewrouter from "./routes/ReviewRoutes"
 import userrouter from "./routes/UserRoutes";
-
+import favoriterouter from  "./routes/FavoriteRoutes"
 import "dotenv/config";
 
 const app = express();
@@ -10,6 +10,7 @@ app.use(express.json());
 
 app.use(userrouter);
 app.use(reviewrouter);
+app.use(favoriterouter);
 
 
 app.get("/", (req, res) => {
