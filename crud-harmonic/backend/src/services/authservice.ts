@@ -3,8 +3,13 @@ import { registerSchema } from "../schemas/AuthSchema";
 import { UserRepository } from "../repositories/UserRepository";
 import jwt from "jsonwebtoken";
 import { resolve } from "node:dns";
+import { forgotPasswordSchema, resetPasswordSchema } from "../schemas/PasswordresetSchema";
+import { PasswordResetRepository } from "../repositories/PasswordresetRepository";
+import { sendResetEmailPassword } from "./emailservice";
 
 export class AuthService {
+
+
   static async register(data: any) {
 
     // 1. validação
@@ -57,6 +62,8 @@ export class AuthService {
     return {user, token};
   }
 
+
+
    static async login(data: any) {
 
     const { email, password } = data;
@@ -88,5 +95,52 @@ export class AuthService {
       user,
       token
     };
+  }
+  static async forgotPassword(data:any){
+    //recebe os dados e valida no zod v 
+    const {email} = forgotPasswordSchema.parse(data);
+
+    const userRepository = new UserRepository();
+    const passwordresetRepository = new PasswordResetRepository();
+
+    const user = await userRepository.findByEmail(email)
+
+          // IMPORTANTE: não revelar se o e-mail existe ou não.
+    // Sempre retorna a mesma mensagem de sucesso, mesmo se o
+    // usuário não for encontrado — evita que alguém descubra
+    // quais e-mails estão cadastrados no sistema.
+
+    if(!user){
+      return {message: "Se o email existir, um link de redefinição foi enviado."}
+    };
+
+    const resettoken = await passwordresetRepository.create(user.id);
+
+    await sendResetEmailPassword(user.email, resettoken.token);
+  
+    return {message: "Se o e-mail existe, um link de redefinição foi enviado"}
+
+
+  }
+
+  static async resetPassword(data:any){
+    const  {token, newPassword} = resetPasswordSchema.parse(data)
+    const userRepository = new UserRepository
+    const passwordresetRepository = new PasswordResetRepository
+
+    const resetToken = await passwordresetRepository.findValidToken(token);
+
+    if(!resetToken){
+      throw new Error("Token inválido ou expirado")   
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);  
+  
+    await userRepository.update(resetToken.user_id, {
+      password:hashedPassword,});
+
+      await passwordresetRepository.markAsUsed(resetToken.id);
+
+      return {message: "Senha redefinida com sucesso"};
   }
 }

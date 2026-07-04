@@ -43,13 +43,15 @@ router.get("/search", async (req, res) => {
   });
 });
 
-// rota esquecer senha(implmentar) router.post("/", controller.forgot)
-
 // rota consultar dados do artista(implementar) router.get("artist/:id) 
 
 router.post("/users", controller.create);
 
 router.post("/login", controller.login)
+
+router.post("/forgot-password", controller.forgotPassword)
+
+router.post("/reset-password", controller.resetPassword)
 
 router.get("/users", controller.findAll);
 
