@@ -2,8 +2,8 @@ export interface Review {
   id?: number;
   user_id?: number;
   music_id?: string | null;
-  artist_id?: string | null;
-  note: number;
-  text: string;
-  created_time?: Date;
+  artist_id: string;
+  note?: number;
+  text?: string;
+  create_time?: Date;
 }

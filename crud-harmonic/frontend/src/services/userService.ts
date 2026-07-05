@@ -24,6 +24,24 @@ export interface AuthResponse {
     token: string;
 }
 
+export interface Review {
+    id: number;
+    user_id: number;
+    music_id?: string | null;
+    artist_id: string;
+    note: number;
+    text: string;
+    create_time: string;
+}
+
+export interface UserProfile {
+    id: number;
+    username: string;
+    bio?: string;
+    photo_url?: string;
+    reviews: Review[];
+}
+
 export const userService = {
 
     // POST /users — cadastro
@@ -41,6 +59,12 @@ export const userService = {
     // GET /users
     async findAll(): Promise<User[]> {
         const response = await api.get<User[]>("/users");
+        return response.data;
+    },
+
+    // GET /users/:id — perfil público (dados + reviews)
+    async getProfile(id: number): Promise<UserProfile> {
+        const response = await api.get<UserProfile>(`/users/${id}`);
         return response.data;
     },
 

@@ -19,7 +19,7 @@ export class ArtistRepository {
 
   /*
    * Garante que o artista existe no banco local.
-   * Se já existir (pelo artist_id do Spotify), retorna o registro existente.
+   * Se já existir (pelo artist_id do Spotify), retorna o existente.
    * Se não existir, cria e retorna o novo registro.
    */
   async findOrCreate(artist: Artist) {
