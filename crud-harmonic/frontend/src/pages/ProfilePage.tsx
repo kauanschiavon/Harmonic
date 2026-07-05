@@ -1,24 +1,37 @@
 import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review } from "../services/userService";
+import { followService, type FollowStats, type FollowUser } from "../services/followService";
 
 export default function ProfilePage({
     userId,
     onBack,
+    onOpenReviews,
+    onOpenProfile,
     onLogout,
 }: {
     userId: number;
     onBack: () => void;
+    onOpenReviews: () => void;
+    onOpenProfile: (userId: number) => void;
     onLogout: () => void;
 }) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [stats, setStats] = useState<FollowStats | null>(null);
+    const [followLoading, setFollowLoading] = useState(false);
+
+    const [listModal, setListModal] = useState<"followers" | "following" | null>(null);
+    const [listUsers, setListUsers] = useState<FollowUser[]>([]);
+    const [listLoading, setListLoading] = useState(false);
+
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
     const isOwnProfile = loggedUser?.id === userId;
 
     useEffect(() => {
         loadProfile();
+        loadStats();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
 
@@ -33,6 +46,53 @@ export default function ProfilePage({
         } finally {
             setLoading(false);
         }
+    }
+
+    async function loadStats() {
+        if (!loggedUser?.id) return;
+        try {
+            const data = await followService.getStats(userId, loggedUser.id);
+            setStats(data);
+        } catch {
+            // sem stats, sem problema — só não mostra os contadores
+        }
+    }
+
+    async function toggleFollow() {
+        if (!loggedUser?.id || !stats || followLoading) return;
+        setFollowLoading(true);
+        try {
+            if (stats.is_following) {
+                await followService.unfollow(userId, loggedUser.id);
+            } else {
+                await followService.follow(userId, loggedUser.id);
+            }
+            await loadStats();
+        } catch {
+            // se falhar, mantém o estado anterior
+        } finally {
+            setFollowLoading(false);
+        }
+    }
+
+    async function openList(tab: "followers" | "following") {
+        setListModal(tab);
+        setListLoading(true);
+        try {
+            const data = tab === "followers"
+                ? await followService.getFollowers(userId)
+                : await followService.getFollowing(userId);
+            setListUsers(data);
+        } catch {
+            setListUsers([]);
+        } finally {
+            setListLoading(false);
+        }
+    }
+
+    function handleOpenProfileFromList(id: number) {
+        setListModal(null);
+        onOpenProfile(id);
     }
 
     function handleLogout() {
@@ -54,7 +114,7 @@ export default function ProfilePage({
                 <div style={s.navLinks}>
                     <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
-                    <span style={s.navLink}>📈 Trending</span>
+                    <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
                     <span style={s.navLink}>📋 Lists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
                 </div>
@@ -92,10 +152,26 @@ export default function ProfilePage({
                                     <span style={s.statBadge}>
                                         <strong style={{ color: "#111" }}>{profile.reviews?.length ?? 0}</strong> reviews
                                     </span>
+                                    <span style={s.statBadgeClickable} onClick={() => openList("followers")}>
+                                        <strong style={{ color: "#111" }}>{stats?.followers_count ?? 0}</strong> seguidores
+                                    </span>
+                                    <span style={s.statBadgeClickable} onClick={() => openList("following")}>
+                                        <strong style={{ color: "#111" }}>{stats?.following_count ?? 0}</strong> seguindo
+                                    </span>
                                 </div>
                             </div>
-                            {isOwnProfile && (
+                            {isOwnProfile ? (
                                 <button style={s.editBtn}>Editar perfil</button>
+                            ) : (
+                                loggedUser?.id && stats && (
+                                    <button
+                                        style={stats.is_following ? s.followingBtn : s.followBtn}
+                                        onClick={toggleFollow}
+                                        disabled={followLoading}
+                                    >
+                                        {followLoading ? "…" : stats.is_following ? "Seguindo" : "Seguir"}
+                                    </button>
+                                )
                             )}
                         </section>
 
@@ -127,6 +203,35 @@ export default function ProfilePage({
                     </>
                 )}
             </main>
+
+            {/* Modal de seguidores/seguindo */}
+            {listModal && (
+                <div style={s.overlay} onClick={() => setListModal(null)}>
+                    <div style={s.modalCard} onClick={(e) => e.stopPropagation()}>
+                        <div style={s.modalHeader}>
+                            <span style={s.modalTitle}>
+                                {listModal === "followers" ? "Seguidores" : "Seguindo"}
+                            </span>
+                            <button style={s.closeBtn} onClick={() => setListModal(null)}>✕</button>
+                        </div>
+
+                        {listLoading && <p style={{ color: "#888", fontSize: 14 }}>Carregando…</p>}
+
+                        {!listLoading && listUsers.length === 0 && (
+                            <p style={{ color: "#888", fontSize: 14 }}>
+                                {listModal === "followers" ? "Nenhum seguidor ainda." : "Não está seguindo ninguém ainda."}
+                            </p>
+                        )}
+
+                        {!listLoading && listUsers.map((u) => (
+                            <div key={u.id} style={s.userRow} onClick={() => handleOpenProfileFromList(u.id)}>
+                                <div style={s.avatarSmall}>{u.username?.[0]?.toUpperCase() ?? "?"}</div>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>{u.username}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -175,9 +280,12 @@ const s: Record<string, React.CSSProperties> = {
     },
     username: { fontSize: 26, fontWeight: 800, color: "#111", margin: "4px 0 6px" },
     bio: { fontSize: 14, color: "#666", margin: 0, lineHeight: 1.5 },
-    statsRow: { display: "flex", gap: 10, marginTop: 14 },
+    statsRow: { display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" },
     statBadge: { fontSize: 13, color: "#888", background: "#f7f7f7", padding: "6px 12px", borderRadius: 20 },
+    statBadgeClickable: { fontSize: 13, color: "#888", background: "#f7f7f7", padding: "6px 12px", borderRadius: 20, cursor: "pointer" },
     editBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111", flexShrink: 0 },
+    followBtn: { border: "1px solid #d44800", background: "#d44800", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#fff", flexShrink: 0 },
+    followingBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111", flexShrink: 0 },
 
     sectionTitle: { fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 16 },
     reviewList: { display: "flex", flexDirection: "column", gap: 12 },
@@ -188,4 +296,15 @@ const s: Record<string, React.CSSProperties> = {
 
     emptyBox: { border: "1.5px dashed #ddd", borderRadius: 12, padding: 32, textAlign: "center" },
     retryBtn: { marginTop: 12, border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#111" },
+
+    overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 },
+    modalCard: { background: "#fff", borderRadius: 16, padding: 24, width: 320, maxHeight: "70vh", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" },
+    modalHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+    modalTitle: { fontSize: 18, fontWeight: 800, color: "#111" },
+    closeBtn: { border: "none", background: "transparent", fontSize: 18, cursor: "pointer", color: "#888" },
+    userRow: { display: "flex", alignItems: "center", gap: 10, padding: "10px 0", cursor: "pointer", borderBottom: "1px solid #f5f5f5" },
+    avatarSmall: {
+        width: 32, height: 32, borderRadius: "50%", backgroundColor: "#111", display: "flex",
+        alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0,
+    },
 };

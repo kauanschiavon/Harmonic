@@ -35,6 +35,8 @@ export default function App() {
             <ProfilePage
                 userId={profileUserId}
                 onBack={() => setView("home")}
+                onOpenReviews={() => setView("reviews")}
+                onOpenProfile={openProfile}
                 onLogout={handleLogout}
             />
         );

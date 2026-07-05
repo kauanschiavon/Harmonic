@@ -13,7 +13,7 @@ export class FavoriteService{
             music_id:validated.music_id,
             title: validated.title ?? "título desconhecido",
             duration_ms: validated.duration,
-            release_date: validated.releate_date ? new Date(validated.releate_date): undefined,
+            release_date: validated.releate_date ?? undefined,
         });
 
         const existing = await FavoriteService.repository.findOne(
