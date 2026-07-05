@@ -16,6 +16,12 @@ export class ReviewController {
     return res.json(reviews);
   }
 
+  // Feed com reviews de todos os usuários + autor + artista (página de Reviews)
+  async findFeed(req: Request, res: Response) {
+    const reviews = await ReviewService.findAllWithAuthors();
+    return res.json(reviews);
+  }
+
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;

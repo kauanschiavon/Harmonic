@@ -14,8 +14,7 @@ export const reviewSchema = z.object({
 
   artist_id: z
     .coerce
-    .string()
-    .optional(),
+    .string(),
 
   text: z
     .string()

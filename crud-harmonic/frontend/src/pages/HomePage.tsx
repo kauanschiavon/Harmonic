@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { spotifyService, type SpotifyAlbum } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
 
-export default function HomePage({ onLogout }: { onLogout: () => void }) {
+export default function HomePage({ onLogout, onOpenProfile, onOpenReviews }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void }) {
     const [query, setQuery] = useState("");
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
     const [loading, setLoading] = useState(false);
@@ -55,9 +55,9 @@ export default function HomePage({ onLogout }: { onLogout: () => void }) {
                 <div style={s.navLinks}>
                     <span style={s.navLinkActive}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
-                    <span style={s.navLink}>📈 Trending</span>
+                    <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
                     <span style={s.navLink}>📋 Lists</span>
-                    <span style={s.navLink}>👤 {user?.username ?? "Profile"}</span>
+                    <span style={s.navLink} onClick={() => user?.id && onOpenProfile(user.id)}>👤 {user?.username ?? "Profile"}</span>
                 </div>
                 <div style={s.navRight}>
                     <form onSubmit={handleSearch} style={{ position: "relative" }}>
