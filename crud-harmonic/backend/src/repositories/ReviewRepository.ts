@@ -20,6 +20,13 @@ export class ReviewRepository {
     .first();
   }
 
+  // Reviews feitas por um usuário específico (usado no perfil público)
+  async findByUserId(userId: number) {
+    return await db("reviews")
+    .where({ user_id: userId })
+    .orderBy("create_time", "desc");
+  }
+
   async update(id: number, data: Partial<Review>) {
     return await db("reviews")
     .where({ id })

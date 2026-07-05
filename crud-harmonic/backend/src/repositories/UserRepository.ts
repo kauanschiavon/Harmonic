@@ -39,6 +39,20 @@ export class UserRepository {
         .first();
     }
 
+    async findById(id: number) {
+        return await db("users")
+        .where({ id })
+        .first();
+    }
+
+    // Perfil público: só os campos que podem ser vistos por outros usuários
+    async findPublicProfileById(id: number) {
+        return await db("users")
+        .select("id", "username", "bio", "photo_url")
+        .where({ id })
+        .first();
+    }
+
     async update(id: number, data: Partial<User>) {
 
         await db("users")
@@ -53,4 +67,3 @@ export class UserRepository {
             .delete();
     }
 }
-

@@ -55,6 +55,9 @@ router.post("/reset-password", controller.resetPassword)
 
 router.get("/users", controller.findAll);
 
+// perfil público de qualquer usuário (visível para outros usuários)
+router.get("/users/:id", controller.getProfile);
+
 router.patch("/users/:id", controller.update);
 
 router.delete("/users/:id", controller.delete);
