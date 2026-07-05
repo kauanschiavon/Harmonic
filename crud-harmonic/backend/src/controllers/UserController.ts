@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import { UserRepository } from "../repositories/UserRepository";
+import { ReviewRepository } from "../repositories/ReviewRepository";
 import { AuthService } from "../services/authservice";
 
 const repository = new UserRepository();
+const reviewRepository = new ReviewRepository();
 
 export class UserController {
 
@@ -34,6 +36,35 @@ export class UserController {
         const users = await repository.findAll();
 
         return res.json(users);
+    }
+
+    // ----------ver perfil de qualquer usuário (público)----------
+    async getProfile(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+
+            const user = await repository.findPublicProfileById(Number(id));
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "Usuário não encontrado"
+                });
+            }
+
+            const reviews = await reviewRepository.findByUserId(Number(id));
+
+            return res.status(200).json({
+                ...user,
+                reviews
+            });
+
+        } catch (error: any) {
+            console.error(error.message);
+            console.error(error);
+            return res.status(500).json({
+                message: "Erro interno do servidor"
+    });
+}
     }
 
 
