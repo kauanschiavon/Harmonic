@@ -115,8 +115,8 @@ function ReviewCard({ review, onOpenProfile }: { review: FeedReview; onOpenProfi
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={s.authorName} onClick={() => onOpenProfile(review.user_id)}>{review.username}</span>
-                    {review.music_title && <span style={s.aboutText}> fez uma review "{review.music_title}"</span>}
-                    {!review.music_title && review.artist_name && <span style={s.aboutText}> fez uma review {review.artist_name}</span>}
+                    {review.music_title && <span style={s.aboutText}> resenhou "{review.music_title}"</span>}
+                    {!review.music_title && review.artist_name && <span style={s.aboutText}> resenhou {review.artist_name}</span>}
                     <div style={s.reviewMeta}>
                         <Stars note={review.note} />
                         {date && <span style={s.reviewDate}>{date}</span>}

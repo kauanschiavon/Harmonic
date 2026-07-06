@@ -6,6 +6,8 @@ export interface User {
     email: string;
     photo_url?: string;
     bio?: string;
+    role?: "user" | "admin";
+    create_time?: string;
 }
 
 export interface RegisterData {
@@ -68,9 +70,9 @@ export const userService = {
         return response.data;
     },
 
-    // PATCH /users/:id
-    async update(id: number, data: Partial<User>): Promise<User> {
-        const response = await api.patch<User>(`/users/${id}`, data);
+    // PATCH /users/:id — só username/bio/photo_url podem ser editados por aqui
+    async update(id: number, data: Partial<Pick<User, "username" | "bio" | "photo_url">>): Promise<Partial<User> & { id: number }> {
+        const response = await api.patch<Partial<User> & { id: number }>(`/users/${id}`, data);
         return response.data;
     },
 

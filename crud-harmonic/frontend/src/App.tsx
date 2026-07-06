@@ -3,15 +3,14 @@ import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
-import SongPage from "./pages/SongPage";
+import UsersPage from "./pages/UsersPage";
 
-type View = "home" | "profile" | "reviews" | "song";
+type View = "home" | "profile" | "reviews" | "users";
 
 export default function App() {
     const [authenticated, setAuthenticated] = useState(false);
     const [view, setView] = useState<View>("home");
     const [profileUserId, setProfileUserId] = useState<number | null>(null);
-    const [currentSongId, setCurrentSongId] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("harmonic_token");
@@ -26,11 +25,6 @@ export default function App() {
     function openProfile(userId: number) {
         setProfileUserId(userId);
         setView("profile");
-    }
-
-    function openSong(songId: string) {
-        setCurrentSongId(songId);
-        setView("song");
     }
 
     if (!authenticated) {
@@ -59,12 +53,10 @@ export default function App() {
         );
     }
 
-    if (view === "song" && currentSongId != null) {
+    if (view === "users") {
         return (
-            <SongPage
-                songId={currentSongId}
+            <UsersPage
                 onBack={() => setView("home")}
-                onOpenProfile={openProfile}
                 onLogout={handleLogout}
             />
         );
@@ -75,7 +67,7 @@ export default function App() {
             onLogout={handleLogout}
             onOpenProfile={openProfile}
             onOpenReviews={() => setView("reviews")}
-            onOpenSong={openSong}
+            onOpenUsers={() => setView("users")}
         />
     );
 }

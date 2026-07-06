@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { userService, type UserProfile, type Review } from "../services/userService";
+import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
+import { EditUserModal } from "./UsersPage";
 
 export default function ProfilePage({
     userId,
@@ -25,6 +26,8 @@ export default function ProfilePage({
     const [listModal, setListModal] = useState<"followers" | "following" | null>(null);
     const [listUsers, setListUsers] = useState<FollowUser[]>([]);
     const [listLoading, setListLoading] = useState(false);
+
+    const [editingProfile, setEditingProfile] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
     const isOwnProfile = loggedUser?.id === userId;
@@ -161,7 +164,7 @@ export default function ProfilePage({
                                 </div>
                             </div>
                             {isOwnProfile ? (
-                                <button style={s.editBtn}>Editar perfil</button>
+                                <button style={s.editBtn} onClick={() => setEditingProfile(true)}>Editar perfil</button>
                             ) : (
                                 loggedUser?.id && stats && (
                                     <button
@@ -231,6 +234,25 @@ export default function ProfilePage({
                         ))}
                     </div>
                 </div>
+            )}
+
+            {/* Editar meu perfil */}
+            {editingProfile && profile && (
+                <EditUserModal
+                    user={{
+                        id: profile.id,
+                        username: profile.username,
+                        bio: profile.bio,
+                        photo_url: profile.photo_url,
+                        email: loggedUser?.email ?? "",
+                    } as User}
+                    onClose={() => setEditingProfile(false)}
+                    onSaved={(updated) => {
+                        setProfile((prev) => (prev ? { ...prev, ...updated } : prev));
+                        localStorage.setItem("harmonic_user", JSON.stringify({ ...loggedUser, ...updated }));
+                        setEditingProfile(false);
+                    }}
+                />
             )}
         </div>
     );

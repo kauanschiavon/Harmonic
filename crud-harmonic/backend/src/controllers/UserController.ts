@@ -71,12 +71,21 @@ export class UserController {
     async update(req: Request, res: Response) {
         const { id } = req.params;
 
-        const newUserData = req.body;
+        // whitelist: nunca deixar o body sobrescrever email/senha/role por aqui
+        const allowedFields = ["username", "bio", "photo_url"] as const;
+        const newUserData: Record<string, any> = {};
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                newUserData[field] = req.body[field];
+            }
+        }
 
         await repository.update(Number(id), newUserData);
-        return res.json({
-            message: "Usuário atualizado"
-        });
+
+        const updated = await repository.findPublicProfileById(Number(id));
+
+        return res.json(updated);
     }
     async login(req: Request, res: Response) {
     try {
