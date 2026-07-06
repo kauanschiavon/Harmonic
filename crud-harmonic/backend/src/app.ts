@@ -4,6 +4,7 @@ import userrouter from "./routes/UserRoutes";
 import favoriterouter from  "./routes/FavoriteRoutes"
 import playlistrouter from "./routes/PlaylistRoutes"
 import commentrouter from "./routes/CommentRoutes"
+import reviewlikerouter from "./routes/ReviewlikeRoutes"
 import "dotenv/config";
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(reviewrouter);
 app.use(favoriterouter);
 app.use(playlistrouter);
 app.use(commentrouter);
+app.use(reviewlikerouter);
 
 app.get("/", (req, res) => {
     return res.status(200).json("Olá Mundo!");
