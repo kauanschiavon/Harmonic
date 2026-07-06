@@ -116,19 +116,34 @@ export default function AuthPage({ onAuthenticated }: { onAuthenticated: () => v
 function Field({ label, icon, type, value, onChange, placeholder }: {
     label: string; icon: string; type: string; value: string; onChange: (v: string) => void; placeholder: string;
 }) {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === "password";
+    const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>{label}</label>
             <div style={{ position: "relative" }}>
                 <span style={s.icon}>{icon}</span>
                 <input
-                    type={type}
+                    type={inputType}
                     placeholder={placeholder}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     required
-                    style={s.input}
+                    style={isPassword ? { ...s.input, paddingRight: 42 } : s.input}
                 />
+                {isPassword && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        style={s.eyeBtn}
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    >
+                        {showPassword ? "🙈" : "👁️"}
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -143,6 +158,7 @@ const s: Record<string, React.CSSProperties> = {
     tab: { padding: 10, borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 15 },
     form: { display: "flex", flexDirection: "column", gap: 16 },
     icon: { position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none" },
+    eyeBtn: { position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1, opacity: 0.7 },
     input: { width: "100%", padding: "12px 14px 12px 42px", borderRadius: 10, border: "1.5px solid #e8e8e8", background: "#f7f7f7", fontSize: 14, color: "#111", outline: "none", boxSizing: "border-box" },
     submit: { width: "100%", padding: 13, borderRadius: 10, border: "none", background: "#111", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer" },
     error: { color: "#d44800", fontSize: 13, margin: 0 },
