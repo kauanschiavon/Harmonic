@@ -14,7 +14,8 @@ export const reviewSchema = z.object({
 
   artist_id: z
     .coerce
-    .string(),
+    .string()
+    .optional(),
 
   text: z
     .string()
@@ -24,4 +25,7 @@ export const reviewSchema = z.object({
     .number()
     .min(1)
     .max(5),
-});
+}).refine(
+  (data) => data.music_id || data.artist_id,
+  { message: "Informe music_id ou artist_id" }
+);

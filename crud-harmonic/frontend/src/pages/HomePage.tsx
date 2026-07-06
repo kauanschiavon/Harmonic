@@ -2,9 +2,20 @@ import { useEffect, useState } from "react";
 import { spotifyService, type SpotifyAlbum } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
 
-export default function HomePage({ onLogout, onOpenProfile, onOpenReviews }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void }) {
+export default function HomePage({
+    onLogout,
+    onOpenProfile,
+    onOpenReviews,
+    onOpenSong,
+}: {
+    onLogout: () => void;
+    onOpenProfile: (userId: number) => void;
+    onOpenReviews: () => void;
+    onOpenSong: (songId: string) => void;
+}) {
     const [query, setQuery] = useState("");
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
+    const [tracks, setTracks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const user = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
@@ -29,8 +40,10 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews }: { o
         try {
             const results = await spotifyService.search(query);
             setAlbums(results.albums ?? []);
+            setTracks(results.tracks ?? []);
         } catch {
             setAlbums([]);
+            setTracks([]);
         } finally {
             setLoading(false);
         }
@@ -74,10 +87,26 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews }: { o
             </nav>
 
             <main style={s.main}>
-                {/* Resultados da busca */}
+                {/* Resultados de músicas */}
+                {tracks.length > 0 && (
+                    <section style={{ marginBottom: 48 }}>
+                        <h2 style={s.sectionTitle}>Músicas</h2>
+                        <div style={s.grid}>
+                            {tracks.map((track) => (
+                                <TrackCard
+                                    key={track.id}
+                                    track={track}
+                                    onClick={() => onOpenSong(track.id)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Resultados de álbuns */}
                 {albums.length > 0 && (
                     <section style={{ marginBottom: 48 }}>
-                        <h2 style={s.sectionTitle}>Resultados da busca</h2>
+                        <h2 style={s.sectionTitle}>Álbuns</h2>
                         <div style={s.grid}>
                             {albums.map((album) => (
                                 <AlbumCard key={album.id} album={album} />
@@ -107,6 +136,18 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews }: { o
                     )}
                 </section>
             </main>
+        </div>
+    );
+}
+
+// Card clicável para músicas (tracks)
+function TrackCard({ track, onClick }: { track: any; onClick: () => void }) {
+    return (
+        <div style={{ ...s.card, cursor: "pointer" }} onClick={onClick}>
+            <div style={{ ...s.coverWrap, backgroundImage: `url(${track.image})` }} />
+            <p style={s.cardTitle}>{track.name}</p>
+            <p style={s.cardSubtitle}>{track.artist}</p>
+            <p style={s.cardMeta}>💿 {track.album}</p>
         </div>
     );
 }
