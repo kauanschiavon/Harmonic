@@ -26,12 +26,22 @@ export class ArtistService {
     // garante que o artista existe localmente antes de buscar a discografia
     await ArtistService.getProfile(artistId);
 
-    const data = await getArtistAlbums(artistId);
+    // O endpoint do Spotify limita a 10 itens por chamada, então paginamos até acabar
+    let allItems: any[] = [];
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const data = await getArtistAlbums(artistId, offset);
+      allItems = allItems.concat(data.items);
+      hasMore = Boolean(data.next);
+      offset += 10;
+    }
 
     // O Spotify pode repetir o mesmo álbum em mercados diferentes; removemos duplicados pelo nome
     const seen = new Set<string>();
 
-    const albums = data.items
+    const albums = allItems
       .filter((album: any) => {
         if (seen.has(album.name)) return false;
         seen.add(album.name);
