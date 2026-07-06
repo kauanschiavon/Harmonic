@@ -4,7 +4,7 @@ import { ArtistService } from "../services/artistservice";
 export class ArtistController {
   async getProfile(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const id = String(req.params.id);
       const artist = await ArtistService.getProfile(id);
       return res.status(200).json(artist);
     } catch (error) {
@@ -16,7 +16,7 @@ export class ArtistController {
 
   async getDiscography(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const id = String(req.params.id);
       const discography = await ArtistService.getDiscography(id);
       return res.status(200).json(discography);
     } catch (error) {
