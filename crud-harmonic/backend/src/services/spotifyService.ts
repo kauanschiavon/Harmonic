@@ -40,3 +40,16 @@ export const getTrack = async (spotifyId: string) => {
   })
   return response.data
 }
+
+export const getArtistAlbums = async (spotifyId: string) => {
+  const token = await getToken()
+  const response = await axios.get(`https://api.spotify.com/v1/artists/${spotifyId}/albums`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      include_groups: 'album,single',
+      market: 'BR',
+      limit: 50,
+    },
+  })
+  return response.data
+}
