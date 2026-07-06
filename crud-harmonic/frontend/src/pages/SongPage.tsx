@@ -93,6 +93,7 @@ export default function SongPage({
             await api.post(`/reviews`, {
                 user_id: user.id,
                 music_id: songId,
+                artist_id: song.artist_id,
                 note,
                 text,
             });
