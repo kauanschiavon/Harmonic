@@ -30,14 +30,18 @@ router.get("/search", async (req, res) => {
       id: album.id,
       name: album.name,
       image: album.images?.[0]?.url,
-      releaseDate: album.release_date
+      releaseDate: album.release_date,
+      artist: album.artists?.[0]?.name,
+      artistId: album.artists?.[0]?.id
     })),
 
     tracks: results.tracks?.items.map((track: any) => ({
       id: track.id,
       name: track.name,
       artist: track.artists[0]?.name,
+      artistId: track.artists[0]?.id,
       album: track.album.name,
+      image: track.album.images?.[0]?.url,
       spotifyUrl: track.external_urls.spotify
     }))
   });

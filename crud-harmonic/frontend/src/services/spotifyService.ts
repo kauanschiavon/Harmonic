@@ -4,6 +4,7 @@ export interface SpotifyAlbum {
     id: string;
     name: string;
     artist?: string;
+    artistId?: string;
     image?: string;
     releaseDate?: string;
 }
@@ -19,7 +20,9 @@ export interface SpotifyTrack {
     id: string;
     name: string;
     artist: string;
+    artistId?: string;
     album: string;
+    image?: string;
     spotifyUrl: string;
 }
 
