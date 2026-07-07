@@ -55,7 +55,7 @@ export default function ListsPage({
                     <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLinkActive}>📋 Lists</span>
+                    <span style={s.navLinkActive}>📋 Playlists</span>
                     <span style={s.navLink} onClick={() => loggedUser?.id && onOpenProfile(loggedUser.id)}>
                         👤 {loggedUser?.username ?? "Profile"}
                     </span>
@@ -68,7 +68,7 @@ export default function ListsPage({
             <main style={s.main}>
                 <h2 style={s.sectionTitle}>Playlists da comunidade</h2>
 
-                {loading && <p style={{ color: "#888" }}>Carregando Lists…</p>}
+                {loading && <p style={{ color: "#888" }}>Carregando Playlists…</p>}
 
                 {!loading && error && (
                     <div style={s.emptyBox}>

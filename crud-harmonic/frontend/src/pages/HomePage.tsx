@@ -59,7 +59,7 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
                     <span style={s.navLinkActive}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLink} onClick={onOpenLists}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
                     <span style={s.navLink} onClick={() => user?.id && onOpenProfile(user.id)}>👤 {user?.username ?? "Profile"}</span>
                     {user?.role === "admin" && (
                         <span style={s.navLink} onClick={onOpenUsers}>🛠️ Admin</span>

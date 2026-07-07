@@ -120,7 +120,7 @@ export default function ProfilePage({
                     <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLink} onClick={onOpenLists}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
                 </div>
                 <div style={s.navRight}>
