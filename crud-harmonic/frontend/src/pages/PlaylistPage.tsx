@@ -11,6 +11,7 @@ function formatDuration(ms: number) {
 export default function PlaylistPage({
     playlistId,
     onBack,
+    onGoHome,
     onOpenReviews,
     onOpenLists,
     onOpenProfile,
@@ -400,3 +401,4 @@ const s: Record<string, React.CSSProperties> = {
     createBtn: { border: "none", background: "#d44800", color: "#fff", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700 },
     confirmDeleteBtn: { border: "none", background: "#d44800", color: "#fff", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700 },
 };
+
