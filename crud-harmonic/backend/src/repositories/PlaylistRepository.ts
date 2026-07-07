@@ -30,17 +30,17 @@ export class PlaylistRepository{
             "playlist.name",
             "playlist.description",
             "playlist.public as is_public",
-            "playlist.created_at",
+            "playlist.create_time as created_at",
             "users.username",
             "users.photo_url as user_photo"
         )
-        .orderBy("playlist.created_at", "desc");
+        .orderBy("playlist.create_time", "desc");
     }
 
     async findByUser(userId: number): Promise<Playlist[]>{
         return await db<Playlist>("playlist")
         .where({user_id: userId})
-        .orderBy("created_time", "desc");
+        .orderBy("create_time", "desc");
     }
 
     async update(id:number, data:Partial<Playlist>): Promise<Playlist>{
