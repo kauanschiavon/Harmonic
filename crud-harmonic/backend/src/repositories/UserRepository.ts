@@ -56,9 +56,18 @@ export class UserRepository {
     // Perfil público: só os campos que podem ser vistos por outros usuários
     async findPublicProfileById(id: number) {
         return await db("users")
-        .select("id", "username", "bio", "photo_url")
+        .select("id", "username", "bio", "photo_url", "create_time")
         .where({ id })
         .first();
+    }
+
+    // Busca usuários pelo username (usado na busca do perfil)
+    async searchByUsername(query: string) {
+        return await db("users")
+        .select("id", "username", "bio", "photo_url")
+        .whereILike("username", `%${query}%`)
+        .orderBy("username", "asc")
+        .limit(20);
     }
 
     async update(id: number, data: Partial<User>) {

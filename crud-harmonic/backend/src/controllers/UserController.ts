@@ -39,6 +39,29 @@ export class UserController {
         return res.json(users);
     }
 
+    // ----------buscar usuários por username (para acessar perfis)----------
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query as { q?: string };
+
+            if (!q || !q.trim()) {
+                return res.status(400).json({
+                    message: "Parâmetro q é obrigatório"
+                });
+            }
+
+            const users = await repository.searchByUsername(q.trim());
+
+            return res.status(200).json(users);
+
+        } catch (error: any) {
+            console.error(error);
+            return res.status(500).json({
+                message: "Erro interno do servidor"
+            });
+        }
+    }    
+
     // ----------ver perfil de qualquer usuário (público)----------
     async getProfile(req: Request, res: Response) {
         try {

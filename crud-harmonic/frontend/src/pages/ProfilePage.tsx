@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
 import { playlistService, type Playlist } from "../services/playlistService";
+import { favoriteService, type FavoriteTrack } from "../services/favoriteService";
 import { EditUserModal } from "./UsersPage";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 
@@ -36,8 +37,13 @@ export default function ProfilePage({
     const [listLoading, setListLoading] = useState(false);
 
     const [editingProfile, setEditingProfile] = useState(false);
+
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [playlistsLoading, setPlaylistsLoading] = useState(true);
+
+    const [favorites, setFavorites] = useState<FavoriteTrack[]>([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(true);
+
     const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
@@ -47,9 +53,22 @@ export default function ProfilePage({
         loadProfile();
         loadStats();
         loadPlaylists();
+        loadFavorites();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
 
+    async function loadFavorites() {
+        setFavoritesLoading(true);
+        try {
+            const data = await favoriteService.listByUser(userId);
+            setFavorites(data);
+        } catch {
+            setFavorites([]);
+        } finally {
+            setFavoritesLoading(false);
+        }
+    }
+    
     async function loadPlaylists() {
         setPlaylistsLoading(true);
         try {
@@ -185,6 +204,11 @@ export default function ProfilePage({
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <h1 style={s.username}>{profile.username}</h1>
+                                {profile.create_time && (
+                                    <p style={s.memberSince}>
+                                        Membro desde {new Date(profile.create_time).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                                    </p>
+                                )}
                                 <p style={s.bio}>{profile.bio || "Este usuário ainda não escreveu uma bio."}</p>
                                 <div style={s.statsRow}>
                                     <span style={s.statBadge}>
@@ -245,6 +269,42 @@ export default function ProfilePage({
                                             <p style={s.playlistName}>{p.name}</p>
                                             {isOwnProfile && p.is_public === false && (
                                                 <span style={s.privateTag}>Privada</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Músicas favoritas do usuário */}
+                        <section style={{ marginBottom: 40 }}>
+                            <h2 style={s.sectionTitle}>
+                                {isOwnProfile ? "Minhas Músicas Favoritas" : `Músicas favoritas de ${profile.username}`}
+                            </h2>
+
+                            {!favoritesLoading && favorites.length === 0 && (
+                                <div style={s.emptyBox}>
+                                    <p style={{ color: "#888", margin: 0 }}>
+                                        {isOwnProfile ? "Você ainda não favoritou nenhuma música." : "Nenhuma música favorita ainda."}
+                                    </p>
+                                    {isOwnProfile && (
+                                        <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
+                                            Procure uma música na Home e favorite para vê-la aqui!
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {favorites.length > 0 && (
+                                <div style={s.favoriteList}>
+                                    {favorites.map((f) => (
+                                        <div key={f.music_id} style={s.favoriteRow}>
+                                            <span style={s.favoriteIcon}>♥</span>
+                                            <span style={s.favoriteTitle}>{f.title}</span>
+                                            {typeof f.duration_ms === "number" && (
+                                                <span style={s.favoriteDuration}>
+                                                    {Math.floor(f.duration_ms / 60000)}:{String(Math.floor((f.duration_ms % 60000) / 1000)).padStart(2, "0")}
+                                                </span>
                                             )}
                                         </div>
                                     ))}

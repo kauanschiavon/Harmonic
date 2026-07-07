@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { spotifyService, type SpotifyAlbum, type SpotifyTrack } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
+import { userService, type UserSearchResult } from "../services/userService";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpenLists, onOpenUsers, onOpenSong, onOpenAlbum, onOpenPlaylist }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void; onOpenLists: () => void; onOpenUsers: () => void; onOpenSong: (songId: string) => void; onOpenAlbum: (albumId: string) => void; onOpenPlaylist: (playlistId: number) => void }) {
     const [query, setQuery] = useState("");
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
+    const [users, setUsers] = useState<UserSearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [confirmLogout, setConfirmLogout] = useState(false);
@@ -30,12 +32,17 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
         if (!query.trim()) return;
         setLoading(true);
         try {
-            const results = await spotifyService.search(query);
+            const [results, foundUsers] = await Promise.all([
+                spotifyService.search(query),
+                userService.search(query).catch(() => []),
+            ]);
             setAlbums(results.albums ?? []);
             setTracks(results.tracks ?? []);
+            setUsers(foundUsers ?? []);
         } catch {
             setAlbums([]);
             setTracks([]);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -73,7 +80,7 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search albums, artists…"
+                            placeholder="Buscar músicas, álbuns, usuários…"
                             style={s.searchInput}
                         />
                     </form>
@@ -90,6 +97,31 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
             />
 
             <main style={s.main}>
+                {/* Usuários encontrados na busca — clique para ver o perfil */}
+                {users.length > 0 && (
+                    <section style={{ marginBottom: 48 }}>
+                        <h2 style={s.sectionTitle}>Usuários</h2>
+                        <div style={s.userGrid}>
+                            {users.map((u) => (
+                                <div key={u.id} style={s.userCard} onClick={() => onOpenProfile(u.id)}>
+                                    <div
+                                        style={{
+                                            ...s.userAvatar,
+                                            backgroundImage: u.photo_url ? `url(${u.photo_url})` : undefined,
+                                        }}
+                                    >
+                                        {!u.photo_url && (u.username?.[0]?.toUpperCase() ?? "?")}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                        <p style={s.userName}>{u.username}</p>
+                                        {u.bio && <p style={s.userBio}>{u.bio}</p>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 {/* Músicas encontradas na busca — clique para ver detalhes e avaliar */}
                 {tracks.length > 0 && (
                     <section style={{ marginBottom: 48 }}>

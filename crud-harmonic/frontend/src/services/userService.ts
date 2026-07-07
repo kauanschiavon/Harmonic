@@ -41,7 +41,15 @@ export interface UserProfile {
     username: string;
     bio?: string;
     photo_url?: string;
+    create_time?: string;
     reviews: Review[];
+}
+
+export interface UserSearchResult {
+    id: number;
+    username: string;
+    bio?: string;
+    photo_url?: string;
 }
 
 export const userService = {
@@ -67,6 +75,13 @@ export const userService = {
     // GET /users/:id — perfil público (dados + reviews)
     async getProfile(id: number): Promise<UserProfile> {
         const response = await api.get<UserProfile>(`/users/${id}`);
+        return response.data;
+    },
+
+    // GET /users/search?q= — busca usuários por username (para acessar perfis)
+    async search(query: string): Promise<UserSearchResult[]> {
+        if (!query.trim()) return [];
+        const response = await api.get<UserSearchResult[]>("/users/search", { params: { q: query } });
         return response.data;
     },
 
