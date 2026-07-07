@@ -90,11 +90,13 @@ export default function ListsPage({
     onBack,
     onOpenReviews,
     onOpenProfile,
+    onOpenPlaylist,
     onLogout,
 }: {
     onBack: () => void;
     onOpenReviews: () => void;
     onOpenProfile: (userId: number) => void;
+    onOpenPlaylist: (playlistId: number) => void;
     onLogout: () => void;
 }) {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -185,7 +187,7 @@ export default function ListsPage({
                 {!loading && !error && playlists.length > 0 && (
                     <div style={s.listGrid}>
                         {playlists.map((playlist) => (
-                            <PlaylistListCard key={playlist.id} playlist={playlist} onOpenProfile={onOpenProfile} />
+                            <PlaylistListCard key={playlist.id} playlist={playlist} onOpenProfile={onOpenProfile} onOpenPlaylist={onOpenPlaylist} />
                         ))}
                     </div>
                 )}
@@ -208,13 +210,21 @@ export default function ListsPage({
     );
 }
 
-function PlaylistListCard({ playlist, onOpenProfile }: { playlist: Playlist; onOpenProfile: (userId: number) => void }) {
+function PlaylistListCard({
+    playlist,
+    onOpenProfile,
+    onOpenPlaylist,
+}: {
+    playlist: Playlist;
+    onOpenProfile: (userId: number) => void;
+    onOpenPlaylist: (playlistId: number) => void;
+}) {
     const date = playlist.created_at
         ? new Date(playlist.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
         : null;
 
     return (
-        <div style={s.listCard}>
+        <div style={{ ...s.listCard, cursor: "pointer" }} onClick={() => onOpenPlaylist(playlist.id)}>
             <div
                 style={{
                     ...s.cover,
@@ -229,13 +239,13 @@ function PlaylistListCard({ playlist, onOpenProfile }: { playlist: Playlist; onO
                             ...s.avatar,
                             backgroundImage: playlist.user_photo ? `url(${playlist.user_photo})` : undefined,
                         }}
-                        onClick={() => onOpenProfile(playlist.user_id)}
+                        onClick={(e) => { e.stopPropagation(); onOpenProfile(playlist.user_id); }}
                     >
                         {!playlist.user_photo && (playlist.username?.[0]?.toUpperCase() ?? "?")}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={s.listTitle}>{playlist.name}</p>
-                        <span style={s.authorName} onClick={() => onOpenProfile(playlist.user_id)}>
+                        <span style={s.authorName} onClick={(e) => { e.stopPropagation(); onOpenProfile(playlist.user_id); }}>
                             por {playlist.username}
                         </span>
                         {date && <span style={s.listDate}> · {date}</span>}

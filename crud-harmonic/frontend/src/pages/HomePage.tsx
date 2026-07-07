@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { spotifyService, type SpotifyAlbum, type SpotifyTrack } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
 
-export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpenLists, onOpenUsers, onOpenSong }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void; onOpenLists: () => void; onOpenUsers: () => void; onOpenSong: (songId: string) => void }) {
+export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpenLists, onOpenUsers, onOpenSong, onOpenPlaylist }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void; onOpenLists: () => void; onOpenUsers: () => void; onOpenSong: (songId: string) => void; onOpenPlaylist: (playlistId: number) => void }) {
     const [query, setQuery] = useState("");
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
@@ -119,7 +119,7 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
                     ) : (
                         <div style={s.grid}>
                             {playlists.map((p) => (
-                                <PlaylistCard key={p.id} playlist={p} />
+                                <PlaylistCard key={p.id} playlist={p} onOpen={onOpenPlaylist} />
                             ))}
                         </div>
                     )}
@@ -151,9 +151,9 @@ function AlbumCard({ album }: { album: SpotifyAlbum }) {
     );
 }
 
-function PlaylistCard({ playlist }: { playlist: Playlist }) {
+function PlaylistCard({ playlist, onOpen }: { playlist: Playlist; onOpen: (playlistId: number) => void }) {
     return (
-        <div style={s.card}>
+        <div style={{ ...s.card, cursor: "pointer" }} onClick={() => onOpen(playlist.id)}>
             <div style={{ ...s.coverWrap, backgroundColor: "#222", backgroundImage: playlist.cover_url ? `url(${playlist.cover_url})` : undefined }} />
             <p style={s.cardTitle}>{playlist.name}</p>
             <p style={s.cardSubtitle}>por {playlist.username}</p>

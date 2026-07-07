@@ -6,14 +6,16 @@ import ReviewsPage from "./pages/ReviewsPage";
 import ListsPage from "./pages/ListsPage";
 import UsersPage from "./pages/UsersPage";
 import SongPage from "./pages/SongPage";
+import PlaylistPage from "./pages/PlaylistPage";
 
-type View = "home" | "profile" | "reviews" | "list" | "users" | "song";
+type View = "home" | "profile" | "reviews" | "list" | "users" | "song" | "playlist";
 
 export default function App() {
     const [authenticated, setAuthenticated] = useState(false);
     const [view, setView] = useState<View>("home");
     const [profileUserId, setProfileUserId] = useState<number | null>(null);
     const [songId, setSongId] = useState<string | null>(null);
+    const [playlistId, setPlaylistId] = useState<number | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("harmonic_token");
@@ -35,6 +37,11 @@ export default function App() {
         setView("song");
     }
 
+    function openPlaylist(id: number) {
+        setPlaylistId(id);
+        setView("playlist");
+    }
+
     if (!authenticated) {
         return <AuthPage onAuthenticated={() => setAuthenticated(true)} />;
     }
@@ -47,6 +54,7 @@ export default function App() {
                 onOpenReviews={() => setView("reviews")}
                 onOpenLists={() => setView("list")}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
         );
@@ -69,6 +77,7 @@ export default function App() {
                 onBack={() => setView("home")}
                 onOpenReviews={() => setView("reviews")}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
         );
@@ -89,6 +98,20 @@ export default function App() {
                 songId={songId}
                 onBack={() => setView("home")}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
+                onLogout={handleLogout}
+            />
+        );
+    }
+
+    if (view === "playlist" && playlistId != null) {
+        return (
+            <PlaylistPage
+                playlistId={playlistId}
+                onBack={() => setView("home")}
+                onOpenReviews={() => setView("reviews")}
+                onOpenLists={() => setView("list")}
+                onOpenProfile={openProfile}
                 onLogout={handleLogout}
             />
         );
@@ -102,6 +125,7 @@ export default function App() {
             onOpenLists={() => setView("list")}
             onOpenUsers={() => setView("users")}
             onOpenSong={openSong}
+            onOpenPlaylist={openPlaylist}
         />
     );
 }
