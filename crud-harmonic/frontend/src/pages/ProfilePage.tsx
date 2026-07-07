@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
+import { playlistService, type Playlist } from "../services/playlistService";
 import { EditUserModal } from "./UsersPage";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 
@@ -9,14 +10,18 @@ export default function ProfilePage({
     onBack,
     onGoHome,
     onOpenReviews,
+    onOpenLists,
     onOpenProfile,
+    onOpenPlaylist,
     onLogout,
 }: {
     userId: number;
     onBack: () => void;
     onGoHome: () => void;
     onOpenReviews: () => void;
+    onOpenLists: () => void;
     onOpenProfile: (userId: number) => void;
+    onOpenPlaylist: (playlistId: number) => void;
     onLogout: () => void;
 }) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -31,6 +36,9 @@ export default function ProfilePage({
     const [listLoading, setListLoading] = useState(false);
 
     const [editingProfile, setEditingProfile] = useState(false);
+    const [editingProfile, setEditingProfile] = useState(false);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [playlistsLoading, setPlaylistsLoading] = useState(true);
     const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
@@ -39,8 +47,21 @@ export default function ProfilePage({
     useEffect(() => {
         loadProfile();
         loadStats();
+        loadPlaylists();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
+
+    async function loadPlaylists() {
+        setPlaylistsLoading(true);
+        try {
+            const data = await playlistService.findByUser(userId);
+            setPlaylists(data);
+        } catch {
+            setPlaylists([]);
+        } finally {
+            setPlaylistsLoading(false);
+        }
+    }
 
     async function loadProfile() {
         setLoading(true);
@@ -108,6 +129,8 @@ export default function ProfilePage({
         onLogout();
     }
 
+    const visiblePlaylists = isOwnProfile ? playlists : playlists.filter((p) => p.is_public !== false);
+
     return (
         <div style={s.page}>
             {/* Navbar — mesma estrutura do HomePage */}
@@ -122,7 +145,7 @@ export default function ProfilePage({
                     <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLink}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
                 </div>
                 <div style={s.navRight}>
@@ -188,6 +211,45 @@ export default function ProfilePage({
                                         {followLoading ? "…" : stats.is_following ? "Seguindo" : "Seguir"}
                                     </button>
                                 )
+                            )}
+                        </section>
+
+                        {/* Playlists do usuário */}
+                        <section style={{ marginBottom: 40 }}>
+                            <h2 style={s.sectionTitle}>
+                                {isOwnProfile ? "Minhas Playlists" : `Playlists de ${profile.username}`}
+                            </h2>
+
+                            {!playlistsLoading && visiblePlaylists.length === 0 && (
+                                <div style={s.emptyBox}>
+                                    <p style={{ color: "#888", margin: 0 }}>
+                                        {isOwnProfile ? "Você ainda não criou nenhuma playlist." : "Nenhuma playlist pública ainda."}
+                                    </p>
+                                    {isOwnProfile && (
+                                        <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
+                                            Crie a primeira na tela de Playlists!
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {visiblePlaylists.length > 0 && (
+                                <div style={s.playlistGrid}>
+                                    {visiblePlaylists.map((p) => (
+                                        <div key={p.id} style={s.playlistCard} onClick={() => onOpenPlaylist(p.id)}>
+                                            <div
+                                                style={{
+                                                    ...s.playlistCover,
+                                                    backgroundImage: p.cover_url ? `url(${p.cover_url})` : undefined,
+                                                }}
+                                            />
+                                            <p style={s.playlistName}>{p.name}</p>
+                                            {isOwnProfile && p.is_public === false && (
+                                                <span style={s.privateTag}>Privada</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </section>
 
@@ -324,6 +386,12 @@ const s: Record<string, React.CSSProperties> = {
     followingBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111", flexShrink: 0 },
 
     sectionTitle: { fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 16 },
+
+    playlistGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 18 },
+    playlistCard: { cursor: "pointer", position: "relative" },
+    playlistCover: { width: "100%", aspectRatio: "1 / 1", borderRadius: 10, backgroundColor: "#222", backgroundSize: "cover", backgroundPosition: "center", marginBottom: 6 },
+    playlistName: { fontSize: 14, fontWeight: 700, color: "#111", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+    privateTag: { fontSize: 11, color: "#888", background: "#f0f0f0", padding: "2px 8px", borderRadius: 10, marginTop: 4, display: "inline-block" },
     reviewList: { display: "flex", flexDirection: "column", gap: 12 },
     reviewCard: { border: "1px solid #eee", borderRadius: 12, padding: 18 },
     reviewTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },

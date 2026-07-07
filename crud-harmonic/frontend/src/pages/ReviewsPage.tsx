@@ -6,11 +6,13 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 export default function ReviewsPage({
     onBack,
     onGoHome,
+    onOpenLists,
     onOpenProfile,
     onLogout,
 }: {
     onBack: () => void;
     onGoHome: () => void;
+    onOpenLists: () => void;
     onOpenProfile: (userId: number) => void;
     onLogout: () => void;
 }) {
@@ -57,7 +59,7 @@ export default function ReviewsPage({
                     <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLinkActive}>📝 Reviews</span>
-                    <span style={s.navLink}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
                     <span style={s.navLink} onClick={() => loggedUser?.id && onOpenProfile(loggedUser.id)}>
                         👤 {loggedUser?.username ?? "Profile"}
                     </span>

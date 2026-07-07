@@ -3,17 +3,21 @@ import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import ProfilePage from "./pages/ProfilePage";
 import ReviewsPage from "./pages/ReviewsPage";
+import ListsPage from "./pages/ListsPage";
 import UsersPage from "./pages/UsersPage";
 import SongPage from "./pages/SongPage";
 import AlbumPage from "./pages/AlbumPage";
+import PlaylistPage from "./pages/PlaylistPage";
 
 type Screen =
     | { view: "home" }
     | { view: "profile"; userId: number }
     | { view: "reviews" }
+    | { view: "list" }
     | { view: "users" }
     | { view: "song"; songId: string }
-    | { view: "album"; albumId: string };
+    | { view: "album"; albumId: string }
+    | { view: "playlist"; playlistId: number };
 
 const HOME_SCREEN: Screen = { view: "home" };
 
@@ -61,8 +65,16 @@ export default function App() {
         navigate({ view: "album", albumId });
     }
 
+    function openPlaylist(playlistId: number) {
+        navigate({ view: "playlist", playlistId });
+    }
+
     function openReviews() {
         navigate({ view: "reviews" });
+    }
+
+    function openLists() {
+        navigate({ view: "list" });
     }
 
     function openUsers() {
@@ -80,7 +92,9 @@ export default function App() {
                 onBack={goBack}
                 onGoHome={goHome}
                 onOpenReviews={openReviews}
+                onOpenLists={openLists}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
         );
@@ -91,7 +105,21 @@ export default function App() {
             <ReviewsPage
                 onBack={goBack}
                 onGoHome={goHome}
+                onOpenLists={openLists}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}  
+                onLogout={handleLogout}
+            />
+        );
+    }
+    if (current.view === "list") {
+        return (
+            <ListsPage
+                onBack={goBack}
+                onGoHome={goHome}
+                onOpenReviews={openReviews}
+                onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
         );
@@ -114,6 +142,7 @@ export default function App() {
                 onBack={goBack}
                 onGoHome={goHome}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
         );
@@ -127,6 +156,21 @@ export default function App() {
                 onGoHome={goHome}
                 onOpenSong={openSong}
                 onOpenProfile={openProfile}
+                onOpenPlaylist={openPlaylist}
+                onLogout={handleLogout}
+            />
+        );
+    }
+
+    if (current.view === "playlist") {
+        return (
+            <PlaylistPage
+                playlistId={current.playlistId}
+                onBack={goBack}
+                onGoHome={goHome}
+                onOpenReviews={openReviews}
+                onOpenLists={openLists}
+                onOpenProfile={openProfile}
                 onLogout={handleLogout}
             />
         );
@@ -137,9 +181,11 @@ export default function App() {
             onLogout={handleLogout}
             onOpenProfile={openProfile}
             onOpenReviews={openReviews}
+            onOpenLists={openLists}
             onOpenUsers={openUsers}
             onOpenSong={openSong}
             onOpenAlbum={openAlbum}
+            onOpenPlaylist={openPlaylist}
         />
     );
 }

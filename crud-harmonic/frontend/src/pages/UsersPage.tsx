@@ -289,3 +289,4 @@ const s: Record<string, React.CSSProperties> = {
     input: { padding: "9px 12px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, outline: "none", fontFamily: "inherit" },
     saveBtn: { marginTop: 14, border: "none", background: "#d44800", color: "#fff", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700 },
 };
+

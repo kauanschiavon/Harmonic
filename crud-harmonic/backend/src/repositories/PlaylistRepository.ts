@@ -17,12 +17,45 @@ export class PlaylistRepository{
     async findById(id: number): Promise<Playlist | undefined>{
         return await db<Playlist>("playlist")
         .where({id})
+        .select(
+            "id",
+            "user_id",
+            "name",
+            "description",
+            "public as is_public",
+            "create_time as created_at"
+        )
         .first();
+    }
+
+    // Feed de playlists de todos os usuários, com dados do autor (usado na página de Lists)
+    async findAllWithAuthors() {
+        return await db("playlist")
+        .join("users", "playlist.user_id", "users.id")
+        .select(
+            "playlist.id",
+            "playlist.user_id",
+            "playlist.name",
+            "playlist.description",
+            "playlist.public as is_public",
+            "playlist.create_time as created_at",
+            "users.username",
+            "users.photo_url as user_photo"
+        )
+        .orderBy("playlist.create_time", "desc");
     }
 
     async findByUser(userId: number): Promise<Playlist[]>{
         return await db<Playlist>("playlist")
         .where({user_id: userId})
+        .select(
+            "id",
+            "user_id",
+            "name",
+            "description",
+            "public as is_public",
+            "create_time as created_at"
+        )
         .orderBy("create_time", "desc");
     }
 
@@ -76,7 +109,7 @@ export class PlaylistRepository{
     async removeMusic(playlistId: number, musicId:string ): Promise<void>{
         await db("playlist_music")
         .where({playlist_id:playlistId, music_id: musicId})
-        .delete;
+        .delete();
     }
 
     async getLastPosition(playlistId: number): Promise<number>{
