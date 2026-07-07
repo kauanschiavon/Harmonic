@@ -23,7 +23,15 @@ export class UserRepository {
 
     async findAll() {
 
-        return await db("users").select("*");
+        return await db("users").select(
+            "id",
+            "username",
+            "email",
+            "bio",
+            "photo_url",
+            "role",
+            "create_time"
+        );
 
     }
 

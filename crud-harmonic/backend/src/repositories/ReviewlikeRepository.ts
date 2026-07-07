@@ -1,5 +1,5 @@
 import { db } from "../database/connection";
-import { ReviewLike } from "../models/ReviewLike";
+import { ReviewLike } from "../models/Reviewlike";
 
 export class ReviewLikeRepository {
 

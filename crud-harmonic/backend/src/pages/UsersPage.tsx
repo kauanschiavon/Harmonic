@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { userService, type User } from "../services/userService";
-import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function UsersPage({
     onBack,
-    onGoHome,
     onLogout,
 }: {
     onBack: () => void;
-    onGoHome: () => void;
     onLogout: () => void;
 }) {
     const [users, setUsers] = useState<User[]>([]);
@@ -16,7 +13,6 @@ export default function UsersPage({
     const [error, setError] = useState("");
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
-    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
     const isAdmin = loggedUser?.role === "admin";
@@ -69,8 +65,7 @@ export default function UsersPage({
                         </span>
                     </div>
                     <div style={s.navRight}>
-                        <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
-                        <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
+                        <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
                     </div>
                 </nav>
                 <main style={s.main}>
@@ -80,14 +75,6 @@ export default function UsersPage({
                         <button onClick={onBack} style={s.retryBtn}>Voltar</button>
                     </div>
                 </main>
-
-                <ConfirmDialog
-                    open={confirmLogout}
-                    title="Sair da conta"
-                    message="Tem certeza que deseja sair da sua conta?"
-                    onConfirm={handleLogout}
-                    onCancel={() => setConfirmLogout(false)}
-                />
             </div>
         );
     }
@@ -102,22 +89,13 @@ export default function UsersPage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLinkActive}>🛠️ Gerenciar usuários</span>
                 </div>
                 <div style={s.navRight}>
-                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
-                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
-
-            <ConfirmDialog
-                open={confirmLogout}
-                title="Sair da conta"
-                message="Tem certeza que deseja sair da sua conta?"
-                onConfirm={handleLogout}
-                onCancel={() => setConfirmLogout(false)}
-            />
 
             <main style={s.main}>
                 <h2 style={s.sectionTitle}>Usuários cadastrados</h2>
@@ -261,7 +239,6 @@ const s: Record<string, React.CSSProperties> = {
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
     navLinkActive: { color: "#111", fontSize: 14, fontWeight: 700, background: "#f0f0f0", padding: "6px 12px", borderRadius: 8, cursor: "pointer" },
     navRight: { display: "flex", alignItems: "center", gap: 12 },
-    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 960, margin: "0 auto" },
 
@@ -289,4 +266,3 @@ const s: Record<string, React.CSSProperties> = {
     input: { padding: "9px 12px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, outline: "none", fontFamily: "inherit" },
     saveBtn: { marginTop: 14, border: "none", background: "#d44800", color: "#fff", borderRadius: 8, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700 },
 };
-

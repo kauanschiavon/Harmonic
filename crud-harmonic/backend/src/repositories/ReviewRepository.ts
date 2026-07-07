@@ -51,6 +51,23 @@ export class ReviewRepository {
       .orderBy("reviews.create_time", "desc");
   }
 
+  // Reviews de uma música específica, com dados do autor (usado na SongPage)
+  async findByMusicIdWithAuthors(musicId: string) {
+    return await db("reviews")
+      .join("users", "reviews.user_id", "users.id")
+      .where("reviews.music_id", musicId)
+      .select(
+        "reviews.id",
+        "reviews.user_id",
+        "reviews.note",
+        "reviews.text",
+        "reviews.create_time",
+        "users.username",
+        "users.photo_url"
+      )
+      .orderBy("reviews.create_time", "desc");
+  }
+
   async update(id: number, data: Partial<Review>) {
     return await db("reviews")
     .where({ id })
