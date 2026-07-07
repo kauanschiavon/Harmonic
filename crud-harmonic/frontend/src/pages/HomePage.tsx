@@ -97,31 +97,8 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
             />
 
             <main style={s.main}>
-                {/* Usuários encontrados na busca — clique para ver o perfil */}
-                {users.length > 0 && (
-                    <section style={{ marginBottom: 48 }}>
-                        <h2 style={s.sectionTitle}>Usuários</h2>
-                        <div style={s.userGrid}>
-                            {users.map((u) => (
-                                <div key={u.id} style={s.userCard} onClick={() => onOpenProfile(u.id)}>
-                                    <div
-                                        style={{
-                                            ...s.userAvatar,
-                                            backgroundImage: u.photo_url ? `url(${u.photo_url})` : undefined,
-                                        }}
-                                    >
-                                        {!u.photo_url && (u.username?.[0]?.toUpperCase() ?? "?")}
-                                    </div>
-                                    <div style={{ minWidth: 0 }}>
-                                        <p style={s.userName}>{u.username}</p>
-                                        {u.bio && <p style={s.userBio}>{u.bio}</p>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
 
+                
                 {/* Músicas encontradas na busca — clique para ver detalhes e avaliar */}
                 {tracks.length > 0 && (
                     <section style={{ marginBottom: 48 }}>
