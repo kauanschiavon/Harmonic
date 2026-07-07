@@ -5,67 +5,50 @@ export interface Playlist {
     user_id: number;
     name: string;
     description?: string;
-    cover_url?: string;
-    is_public?: boolean;
-    created_at?: string;
-    username?: string;
-    user_photo?: string;
+    public?: boolean;
+    create_time?: string;
 }
 
-export interface PlaylistWithAlbums extends Playlist {
-    albums: { id: number; spotify_album_id: string; added_at: string }[];
+export interface PlaylistWithMusics extends Playlist {
+    musics: {
+        music_id: string;
+        title: string;
+        duration_ms?: number;
+        position: number;
+    }[];
 }
 
-export type CreatePlaylistData = Pick<Playlist, "user_id" | "name" | "description" | "cover_url" | "is_public">;
-export type UpdatePlaylistData = Partial<CreatePlaylistData>;
+export type CreatePlaylistData = {
+    user_id: number;
+    name: string;
+    description?: string;
+    public?: boolean;
+};
 
 export const playlistService = {
-
-    // POST /playlists
     async create(data: CreatePlaylistData): Promise<Playlist> {
-        const response = await api.post<Playlist>("/playlists", data);
-        return response.data;
+        const res = await api.post<Playlist>("/playlists", data);
+        return res.data;
     },
-
-    // GET /playlists — feed público
-    async findAll(): Promise<Playlist[]> {
-        const response = await api.get<Playlist[]>("/playlists");
-        return response.data;
-    },
-
-    // GET /playlists/:id (com álbuns)
-    async findById(id: number): Promise<PlaylistWithAlbums> {
-        const response = await api.get<PlaylistWithAlbums>(`/playlists/${id}`);
-        return response.data;
-    },
-
-    // GET /users/:userId/playlists
     async findByUser(userId: number): Promise<Playlist[]> {
-        const response = await api.get<Playlist[]>(`/users/${userId}/playlists`);
-        return response.data;
+        const res = await api.get<Playlist[]>(`/playlists/user/${userId}`);
+        return res.data;
     },
-
-    // PATCH /playlists/:id
-    async update(id: number, data: UpdatePlaylistData): Promise<Playlist> {
-        const response = await api.patch<Playlist>(`/playlists/${id}`, data);
-        return response.data;
+    async findById(id: number): Promise<PlaylistWithMusics> {
+        const res = await api.get<PlaylistWithMusics>(`/playlists/${id}`);
+        return res.data;
     },
-
-    // DELETE /playlists/:id
-    async delete(id: number): Promise<void> {
-        await api.delete(`/playlists/${id}`);
+    async update(id: number, data: Partial<CreatePlaylistData>): Promise<Playlist> {
+        const res = await api.patch<Playlist>(`/playlists/${id}`, data);
+        return res.data;
     },
-
-    // POST /playlists/:id/albums
-    async addAlbum(playlistId: number, spotifyAlbumId: string) {
-        const response = await api.post(`/playlists/${playlistId}/albums`, {
-            spotify_album_id: spotifyAlbumId,
-        });
-        return response.data;
+    async delete(id: number, userId: number): Promise<void> {
+        await api.delete(`/playlists/${id}`, { data: { user_id: userId } });
     },
-
-    // DELETE /playlists/:id/albums/:spotifyAlbumId
-    async removeAlbum(playlistId: number, spotifyAlbumId: string): Promise<void> {
-        await api.delete(`/playlists/${playlistId}/albums/${spotifyAlbumId}`);
+    async addMusic(playlistId: number, music: { music_id: string; title?: string; duration_ms?: number }): Promise<void> {
+        await api.post(`/playlists/${playlistId}/musics`, music);
+    },
+    async removeMusic(playlistId: number, musicId: string): Promise<void> {
+        await api.delete(`/playlists/${playlistId}/musics/${musicId}`);
     },
 };

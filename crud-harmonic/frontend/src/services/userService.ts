@@ -6,6 +6,8 @@ export interface User {
     email: string;
     photo_url?: string;
     bio?: string;
+    role?: "user" | "admin";
+    create_time?: string;
 }
 
 export interface RegisterData {
@@ -22,6 +24,24 @@ export interface LoginData {
 export interface AuthResponse {
     user: User;
     token: string;
+}
+
+export interface Review {
+    id: number;
+    user_id: number;
+    music_id?: string | null;
+    artist_id: string;
+    note: number;
+    text: string;
+    create_time: string;
+}
+
+export interface UserProfile {
+    id: number;
+    username: string;
+    bio?: string;
+    photo_url?: string;
+    reviews: Review[];
 }
 
 export const userService = {
@@ -44,9 +64,15 @@ export const userService = {
         return response.data;
     },
 
-    // PATCH /users/:id
-    async update(id: number, data: Partial<User>): Promise<User> {
-        const response = await api.patch<User>(`/users/${id}`, data);
+    // GET /users/:id — perfil público (dados + reviews)
+    async getProfile(id: number): Promise<UserProfile> {
+        const response = await api.get<UserProfile>(`/users/${id}`);
+        return response.data;
+    },
+
+    // PATCH /users/:id — só username/bio/photo_url podem ser editados por aqui
+    async update(id: number, data: Partial<Pick<User, "username" | "bio" | "photo_url">>): Promise<Partial<User> & { id: number }> {
+        const response = await api.patch<Partial<User> & { id: number }>(`/users/${id}`, data);
         return response.data;
     },
 
