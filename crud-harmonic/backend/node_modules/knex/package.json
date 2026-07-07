@@ -1,6 +1,6 @@
 {
   "name": "knex",
-  "version": "3.2.10",
+  "version": "3.3.0",
   "description": "A batteries-included SQL query & schema builder for PostgresSQL, MySQL, CockroachDB, MSSQL and SQLite3",
   "main": "knex.js",
   "types": "types/index.d.ts",
@@ -25,11 +25,12 @@
     "test:unit-only": "mocha --exit -t 10000 --config test/mocha-unit-config-test.js",
     "test:db": "mocha --exit -t 10000 --config test/mocha-integration-config-test.js",
     "test:db:coverage": "nyc mocha --exit --check-leaks -t 10000 --config test/mocha-integration-config-test.js && npm run test:tape",
-    "test:db:no-oracle": "cross-env DB=\"mssql mysql mysql2 postgres sqlite3\" mocha --exit -t 10000 --config test/mocha-integration-config-test.js && npm run test:tape",
+    "test:db:no-oracle": "cross-env DB=\"mssql mysql mysql2 mariadb postgres sqlite3\" mocha --exit -t 10000 --config test/mocha-integration-config-test.js && npm run test:tape",
     "test": "mocha --exit -t 10000 --config test/mocha-all-config-test.js && npm run test:tape && npm run test:cli",
     "test:coverage": "nyc mocha --exit --check-leaks -t 10000 --config test/mocha-all-config-test.js && npm run test:tape && npm run test:cli",
     "test:everything": "npm run lint:everything && npm run test:coverage",
     "test:mssql": "cross-env DB=mssql npm run test:db",
+    "test:mariadb": "cross-env DB=mariadb npm run test:db",
     "test:mysql": "cross-env DB=mysql npm run test:db",
     "test:mysql2": "cross-env DB=mysql2 npm run test:db",
     "test:oracledb": "cross-env DB=oracledb npm run test:db",
@@ -40,8 +41,8 @@
     "test:pgnative": "cross-env DB=pgnative npm run test:db",
     "test:tape": "node test/tape/index.js | faucet",
     "test:cli": "cross-env KNEX_PATH=../knex.js KNEX=bin/cli.js jake -f test/jake/Jakefile && mocha --exit -t 10000 test/cli-tests-suite.js",
-    "db:start": "docker compose -f scripts/docker-compose.yml up --build -d mysql oracledb postgres mssql cockroachdb pgnative && docker compose -f scripts/docker-compose.yml up waitmssql waitmysql waitpostgres waitoracledb",
-    "db:start:no-oracle": "docker compose -f scripts/docker-compose.yml up --build -d mysql postgres mssql cockroachdb pgnative && docker compose -f scripts/docker-compose.yml up waitmssql waitmysql waitpostgres",
+    "db:start": "docker compose -f scripts/docker-compose.yml up --build -d mysql oracledb postgres mssql mariadb cockroachdb pgnative && docker compose -f scripts/docker-compose.yml up waitmssql waitmysql waitmariadb waitpostgres waitoracledb",
+    "db:start:no-oracle": "docker compose -f scripts/docker-compose.yml up --build -d mysql postgres mssql mariadb cockroachdb pgnative && docker compose -f scripts/docker-compose.yml up waitmssql waitmysql waitmariadb waitpostgres",
     "db:stop": "docker compose -f scripts/docker-compose.yml down",
     "db:start:postgres": "docker compose -f scripts/docker-compose.yml up --build -d postgres && docker compose -f scripts/docker-compose.yml up waitpostgres",
     "db:stop:postgres": "docker compose -f scripts/docker-compose.yml down",
@@ -49,6 +50,8 @@
     "db:stop:pgnative": "docker compose -f scripts/docker-compose.yml down",
     "db:start:mysql": "docker compose -f scripts/docker-compose.yml up --build -d mysql && docker compose -f scripts/docker-compose.yml up waitmysql",
     "db:stop:mysql": "docker compose -f scripts/docker-compose.yml down",
+    "db:start:mariadb": "docker compose -f scripts/docker-compose.yml up --build -d mariadb && docker compose -f scripts/docker-compose.yml up waitmariadb",
+    "db:stop:mariadb": "docker compose -f scripts/docker-compose.yml down",
     "db:start:mssql": "docker compose -f scripts/docker-compose.yml up --build -d mssql && docker compose -f scripts/docker-compose.yml up waitmssql",
     "db:stop:mssql": "docker compose -f scripts/docker-compose.yml down",
     "db:start:cockroachdb": "docker compose -f scripts/docker-compose.yml up --build -d cockroachdb && docker compose -f scripts/docker-compose.yml up waitcockroachdb",
@@ -72,7 +75,7 @@
     "pg-connection-string": "2.6.2",
     "rechoir": "^0.8.0",
     "resolve-from": "^5.0.0",
-    "tarn": "^3.0.2",
+    "tarn": "^3.1.0",
     "tildify": "2.0.0"
   },
   "peerDependencies": {
@@ -80,6 +83,9 @@
   },
   "peerDependenciesMeta": {
     "tedious": {
+      "optional": true
+    },
+    "mariadb": {
       "optional": true
     },
     "mysql": {
@@ -131,6 +137,7 @@
     "jake": "^10.8.5",
     "JSONStream": "^1.3.5",
     "lint-staged": "^16.2.7",
+    "mariadb": "^3.5.2",
     "mocha": "^10.0.0",
     "mock-fs": "^5.1.4",
     "mysql": "^2.18.1",
@@ -164,7 +171,7 @@
     "type": "git",
     "url": "git://github.com/knex/knex.git"
   },
-  "homepage": "https://knex.github.io/documentation/",
+  "homepage": "https://knexjs.org/",
   "keywords": [
     "sql",
     "query",
@@ -213,6 +220,7 @@
     "./lib/bin/cli.js": "./lib/util/noop.js",
     "./lib/migrations/seed/Seeder.js": "./lib/util/noop.js",
     "tedious": false,
+    "mariadb": false,
     "mysql": false,
     "mysql2": false,
     "pg": false,

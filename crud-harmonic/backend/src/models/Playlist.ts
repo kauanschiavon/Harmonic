@@ -1,16 +1,14 @@
-export interface Playlist {
-    id?: number;
-    user_id: number;
+export interface Playlist{
+    id?: number,
+    user_id:number,
     name: string;
     description?: string;
-    cover_url?: string;
-    is_public?: boolean;
-    created_at?: string;
+    public?: boolean;
+    created_at?: Date;
 }
 
-export interface PlaylistAlbum {
-    id?: number;
+export interface PlaylistMusic{
     playlist_id: number;
-    spotify_album_id: string;
-    added_at?: string;
+    music_id: string;
+    position:number;
 }

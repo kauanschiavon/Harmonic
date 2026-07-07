@@ -1,73 +1,100 @@
+import { platform } from "node:os";
 import { db } from "../database/connection";
-import { Playlist, PlaylistAlbum } from "../models/Playlist";
+import { Playlist, PlaylistMusic } from "../models/Playlist";
+import { promises } from "node:stream";
 
-export class PlaylistRepository {
+export class PlaylistRepository{
+    //playlist
 
-    // ── Playlists ─────────────────────────────────────────────────────────
+    async create(data: Playlist): Promise<Playlist>{
+        const [created] = await db<Playlist>("playlist")
+        .insert(data)
+        .returning("*");
 
-    async create(playlist: Omit<Playlist, "id" | "created_at">) {
-        const [created] = await db("playlists").insert(playlist).returning("*");
         return created;
     }
 
-    // Todas as playlists públicas (feed)
-    async findAll() {
-        return await db("playlists")
-            .join("users", "playlists.user_id", "users.id")
-            .select(
-                "playlists.*",
-                "users.username",
-                "users.photo_url as user_photo"
-            )
-            .where("playlists.is_public", true)
-            .orderBy("playlists.created_at", "desc");
+    async findById(id: number): Promise<Playlist | undefined>{
+        return await db<Playlist>("playlist")
+        .where({id})
+        .first();
     }
 
-    // Playlists de um usuário específico
-    async findByUser(user_id: number) {
-        return await db("playlists")
-            .where({ user_id })
-            .orderBy("created_at", "desc");
+    async findByUser(userId: number): Promise<Playlist[]>{
+        return await db<Playlist>("playlist")
+        .where({user_id: userId})
+        .orderBy("create_time", "desc");
     }
 
-    async findById(id: number) {
-        return await db("playlists")
-            .join("users", "playlists.user_id", "users.id")
-            .select("playlists.*", "users.username", "users.photo_url as user_photo")
-            .where("playlists.id", id)
-            .first();
-    }
+    async update(id:number, data:Partial<Playlist>): Promise<Playlist>{
+        const [updated] = await db<Playlist>("playlist")
+        .where({id})
+        .update(data)
+        .returning("*");
 
-    async update(id: number, data: Partial<Playlist>) {
-        const [updated] = await db("playlists").where({ id }).update(data).returning("*");
         return updated;
     }
-
-    async delete(id: number) {
-        await db("playlists").where({ id }).delete();
+    async delete(id:number){
+        await db("playlist")
+        .where({id}).delete();
     }
 
-    // ── Álbuns dentro de uma playlist ─────────────────────────────────────
+    //musica da playlist
 
-    // Lista os spotify_album_ids da playlist
-    async getAlbums(playlist_id: number) {
-        return await db("playlist_albums")
-            .where({ playlist_id })
-            .orderBy("added_at", "asc");
+    async addMusic(playlistId: number, musicId:string, position:number ):
+    Promise<PlaylistMusic>{
+        const [created] = await db<PlaylistMusic>("playlist_music")
+        .insert({
+            playlist_id: playlistId,
+            music_id: musicId,
+            position,
+        })
+        .returning("*");
+
+        return created;
     }
 
-    // Adiciona um álbum do Spotify à playlist
-    async addAlbum(playlist_id: number, spotify_album_id: string) {
-        const [added] = await db("playlist_albums")
-            .insert({ playlist_id, spotify_album_id })
-            .returning("*");
-        return added;
+    async findMusic(playlistId: number, musicId: string): Promise<PlaylistMusic | undefined>{
+        return await db<PlaylistMusic>("playlist_music")
+        .where({playlist_id: playlistId, music_id: musicId})
+        .first()
+    } 
+
+    async listMusics(playlistId: number){
+        return await db("playlist_music as pm")
+        .join("music as m", "pm.music_id", "m.music_id")
+        .where("pm.playlist_id", playlistId)
+        .select(
+            "m.music_id",
+            "m.title",
+            "m.duration_ms",
+            "pm.position"
+        )
+        .orderBy("pm.position", "asc");
     }
 
-    // Remove um álbum da playlist
-    async removeAlbum(playlist_id: number, spotify_album_id: string) {
-        await db("playlist_albums")
-            .where({ playlist_id, spotify_album_id })
-            .delete();
+    async removeMusic(playlistId: number, musicId:string ): Promise<void>{
+        await db("playlist_music")
+        .where({playlist_id:playlistId, music_id: musicId})
+        .delete();
+    }
+
+    async getLastPosition(playlistId: number): Promise<number>{
+        const result = await db("playlist_music")
+        .where({playlist_id: playlistId})
+        .max("position as max_position")
+        .first();
+
+        return result?.max_position??0
+    }
+
+    async reorder(playlistId:number, order:{ music_id: string; position: number}[]): Promise<void>{
+        await Promise.all(
+            order.map(({music_id, position})=>
+            db("playlist_music")
+        .where({playlist_id: playlistId, music_id})
+        .update({position})
+            )
+        );
     }
 }

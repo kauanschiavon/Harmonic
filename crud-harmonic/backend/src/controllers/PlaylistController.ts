@@ -1,105 +1,102 @@
 import { Request, Response } from "express";
-import { PlaylistRepository } from "../repositories/PlaylistRepository";
-
-const repository = new PlaylistRepository();
+import { PlaylistService } from "../services/playlistservice";
 
 export class PlaylistController {
 
-    // POST /playlists
-    async create(req: Request, res: Response) {
-        try {
-            const playlist = await repository.create(req.body);
-            return res.status(201).json(playlist);
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao criar playlist", error });
-        }
+  async create(req: Request, res: Response) {
+    try {
+      const playlist = await PlaylistService.create(req.body);
+      return res.status(201).json(playlist);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // GET /playlists — feed público
-    async findAll(req: Request, res: Response) {
-        try {
-            const playlists = await repository.findAll();
-            return res.json(playlists);
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao buscar playlists", error });
-        }
+  async listByUser(req: Request, res: Response) {
+    try {
+      const userId = Number(req.params.userId as string);
+      const playlists = await PlaylistService.listByUser(userId);
+      return res.status(200).json(playlists);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // GET /playlists/:id
-    async findById(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const playlist = await repository.findById(Number(id));
-
-            if (!playlist) {
-                return res.status(404).json({ message: "Playlist não encontrada" });
-            }
-
-            const albums = await repository.getAlbums(Number(id));
-            return res.json({ ...playlist, albums });
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao buscar playlist", error });
-        }
+  async getById(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id as string);
+      const playlist = await PlaylistService.getById(id);
+      return res.status(200).json(playlist);
+    } catch (error) {
+      return res.status(404).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // GET /users/:userId/playlists
-    async findByUser(req: Request, res: Response) {
-        try {
-            const { userId } = req.params;
-            const playlists = await repository.findByUser(Number(userId));
-            return res.json(playlists);
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao buscar playlists do usuário", error });
-        }
+  async update(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id as string);
+      const playlist = await PlaylistService.update(id, req.body);
+      return res.status(200).json(playlist);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // PATCH /playlists/:id
-    async update(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const playlist = await repository.update(Number(id), req.body);
-            return res.json(playlist);
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao atualizar playlist", error });
-        }
+  async delete(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id as string);
+      const userId = Number(req.body.user_id);
+      const result = await PlaylistService.delete(id, userId);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // DELETE /playlists/:id
-    async delete(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            await repository.delete(Number(id));
-            return res.status(200).json({ message: "Playlist deletada" });
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao deletar playlist", error });
-        }
+  async addMusic(req: Request, res: Response) {
+    try {
+      const playlistId = Number(req.params.id as string);
+      const result = await PlaylistService.addMusic(playlistId, req.body);
+      return res.status(201).json(result);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // POST /playlists/:id/albums  { spotify_album_id }
-    async addAlbum(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const { spotify_album_id } = req.body;
-
-            if (!spotify_album_id) {
-                return res.status(400).json({ message: "spotify_album_id é obrigatório" });
-            }
-
-            const added = await repository.addAlbum(Number(id), String(spotify_album_id));
-            return res.status(201).json(added);
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao adicionar álbum", error });
-        }
+  async removeMusic(req: Request, res: Response) {
+    try {
+      const playlistId = Number(req.params.id as string);
+      const musicId = req.params.musicId as string;
+      const result = await PlaylistService.removeMusic(playlistId, musicId);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 
-    // DELETE /playlists/:id/albums/:spotifyAlbumId
-    async removeAlbum(req: Request, res: Response) {
-        try {
-            const { id, spotifyAlbumId } = req.params;
-            await repository.removeAlbum(Number(id), String(spotifyAlbumId));
-            return res.status(200).json({ message: "Álbum removido da playlist" });
-        } catch (error) {
-            return res.status(500).json({ message: "Erro ao remover álbum", error });
-        }
+  async reorder(req: Request, res: Response) {
+    try {
+      const playlistId = Number(req.params.id as string);
+      const result = await PlaylistService.reorder(playlistId, req.body);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
     }
+  }
 }

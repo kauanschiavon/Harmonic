@@ -1,37 +1,77 @@
+import { isAwaitKeyword } from "typescript";
 import { db } from "../database/connection";
 import { User } from "../models/User";
 
 export class UserRepository {
 
-    async create(user: Omit<User, "id">) {
-        const [createdUser] = await db("users")
-            .insert(user)
-            .returning(["id", "username", "email", "bio", "photo_url"]);
-        return createdUser;
-    }
+    
+
+    async create(user: User) {
+
+    const [createdUser] = await db("users")
+        .insert(user)
+        .returning([
+            "id",
+            "username",
+            "email",
+            "bio",
+            "photo_url"
+        ]);
+
+    return createdUser;
+}
 
     async findAll() {
-        return await db("users").select("id", "username", "email", "bio", "photo_url", "created_at");
+
+        return await db("users").select(
+            "id",
+            "username",
+            "email",
+            "bio",
+            "photo_url",
+            "role",
+            "create_time"
+        );
+
+    }
+
+    async findByEmail(email: string){
+        return await db("users")
+        .where({email})
+        .first();
+    }
+
+    async findByUsername(username: string){
+        return await db("users")
+        .where({username})
+        .first();
     }
 
     async findById(id: number) {
-        return await db("users").where({ id }).first();
+        return await db("users")
+        .where({ id })
+        .first();
     }
 
-    async findByEmail(email: string) {
-        return await db("users").where({ email }).first();
-    }
-
-    async findByUsername(username: string) {
-        return await db("users").where({ username }).first();
+    // Perfil público: só os campos que podem ser vistos por outros usuários
+    async findPublicProfileById(id: number) {
+        return await db("users")
+        .select("id", "username", "bio", "photo_url")
+        .where({ id })
+        .first();
     }
 
     async update(id: number, data: Partial<User>) {
-        const [updated] = await db("users").where({ id }).update(data).returning(["id", "username", "email", "bio", "photo_url"]);
-        return updated;
+
+        await db("users")
+            .where({ id })
+            .update(data);
     }
 
     async delete(id: number) {
-        await db("users").where({ id }).delete();
+
+        await db("users")
+            .where({ id })
+            .delete();
     }
 }
