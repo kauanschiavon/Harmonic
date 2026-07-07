@@ -4,16 +4,16 @@ import { MusicRepository } from "../repositories/MusicRepository";
 import { reviewSchema, reviewUpdateSchema } from "../schemas/ReviewSchema";
 import { getArtist, getTrack } from "./spotifyService";
 
-export class ReviewService {
-  private static repository = new ReviewRepository();
-  private static artistRepository = new ArtistRepository();
-  private static musicRepository = new MusicRepository();
+const reviewRepository = new ReviewRepository();
+const artistRepository = new ArtistRepository();
+const musicRepository = new MusicRepository();
 
-  static async create(data: unknown) {
+export const reviewService = {
+  async create(data: unknown) {
     const validatedData = reviewSchema.parse(data);
 
-    // Impede que o usuário avalie a mesma música (ou o mesmo artista, sem música) mais de uma vez
-    const existingReview = await ReviewService.repository.findByUserAndTarget(
+    // Impede que o usuário avalie a mesma música (ou o mesmo artista) mais de uma vez
+    const existingReview = await reviewRepository.findByUserAndTarget(
       validatedData.user_id,
       validatedData.artist_id,
       validatedData.music_id ?? null
@@ -27,27 +27,27 @@ export class ReviewService {
       );
     }
 
-    // Garante que o artista existe na tabela local "artist" (busca no Spotify se precisar criar)
-    let artist = await ReviewService.artistRepository.findByArtistId(validatedData.artist_id);
+    // Garante que o artista exista no banco local
+    let artist = await artistRepository.findByArtistId(validatedData.artist_id);
 
     if (!artist) {
       const spotifyArtist = await getArtist(validatedData.artist_id);
 
-      artist = await ReviewService.artistRepository.create({
+      artist = await artistRepository.create({
         artist_id: validatedData.artist_id,
         name: spotifyArtist.name,
         photo_url: spotifyArtist.images?.[0]?.url ?? "",
       });
     }
 
-    // Se a review também referencia uma música, garante que ela existe na tabela local "music"
+    // Garante que a música exista no banco local
     if (validatedData.music_id) {
-      const music = await ReviewService.musicRepository.findByMusicId(validatedData.music_id);
+      const music = await musicRepository.findByMusicId(validatedData.music_id);
 
       if (!music) {
         const spotifyTrack = await getTrack(validatedData.music_id);
 
-        await ReviewService.musicRepository.create({
+        await musicRepository.create({
           music_id: validatedData.music_id,
           title: spotifyTrack.name,
           duration_ms: spotifyTrack.duration_ms,
@@ -56,35 +56,44 @@ export class ReviewService {
       }
     }
 
-    return await ReviewService.repository.create({
+    return await reviewRepository.create({
       user_id: validatedData.user_id,
       text: validatedData.text,
       note: validatedData.note,
       artist_id: validatedData.artist_id,
       music_id: validatedData.music_id ?? null,
     });
-  }
+  },
 
-  static async findAll() {
-    return await ReviewService.repository.findAll();
-  }
+  async findAll() {
+    return await reviewRepository.findAll();
+  },
 
-  static async findAllWithAuthors() {
-    return await ReviewService.repository.findAllWithAuthors();
-  }
+  // Feed de reviews com autor, artista e música
+  async getFeed() {
+    return await reviewRepository.findAllWithAuthors();
+  },
 
-  static async update(id: number, data: unknown) {
-    const validatedData = reviewUpdateSchema.parse(data);
-    return await ReviewService.repository.update(id, validatedData);
-  }
+  async findAllWithAuthors() {
+    return await reviewRepository.findAllWithAuthors();
+  },
 
-  static async delete(id: number) {
-    return await ReviewService.repository.delete(id);
-  }
+  async findById(id: number) {
+    const review = await reviewRepository.findById(id);
 
-  static async findById(id: number) {
-    const review = await ReviewService.repository.findById(id);
-    if (!review) throw new Error("Review não encontrada");
+    if (!review) {
+      throw new Error("Review não encontrada");
+    }
+
     return review;
-  }
-}
+  },
+
+  async update(id: number, data: unknown) {
+    const validatedData = reviewUpdateSchema.parse(data);
+    return await reviewRepository.update(id, validatedData);
+  },
+
+  async delete(id: number) {
+    return await reviewRepository.delete(id);
+  },
+};

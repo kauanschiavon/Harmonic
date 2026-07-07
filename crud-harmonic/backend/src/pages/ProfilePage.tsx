@@ -1,30 +1,19 @@
 import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
-import { reviewService } from "../services/reviewService";
-import { playlistService, type Playlist } from "../services/playlistService";
 import { EditUserModal } from "./UsersPage";
-import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function ProfilePage({
     userId,
     onBack,
-    onGoHome,
     onOpenReviews,
-    onOpenLists,
     onOpenProfile,
-    onOpenSong,
-    onOpenPlaylist,
     onLogout,
 }: {
     userId: number;
     onBack: () => void;
-    onGoHome: () => void;
     onOpenReviews: () => void;
-    onOpenLists: () => void;
     onOpenProfile: (userId: number) => void;
-    onOpenSong?: (songId: string) => void;
-    onOpenPlaylist: (playlistId: number) => void;
     onLogout: () => void;
 }) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -39,9 +28,6 @@ export default function ProfilePage({
     const [listLoading, setListLoading] = useState(false);
 
     const [editingProfile, setEditingProfile] = useState(false);
-    const [playlists, setPlaylists] = useState<Playlist[]>([]);
-    const [playlistsLoading, setPlaylistsLoading] = useState(true);
-    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
     const isOwnProfile = loggedUser?.id === userId;
@@ -49,21 +35,8 @@ export default function ProfilePage({
     useEffect(() => {
         loadProfile();
         loadStats();
-        loadPlaylists();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
-
-    async function loadPlaylists() {
-        setPlaylistsLoading(true);
-        try {
-            const data = await playlistService.findByUser(userId);
-            setPlaylists(data);
-        } catch {
-            setPlaylists([]);
-        } finally {
-            setPlaylistsLoading(false);
-        }
-    }
 
     async function loadProfile() {
         setLoading(true);
@@ -131,8 +104,6 @@ export default function ProfilePage({
         onLogout();
     }
 
-    const visiblePlaylists = isOwnProfile ? playlists : playlists.filter((p) => p.is_public !== false);
-
     return (
         <div style={s.page}>
             {/* Navbar — mesma estrutura do HomePage */}
@@ -144,25 +115,16 @@ export default function ProfilePage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
+                    <span style={s.navLink}>📋 Lists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
                 </div>
                 <div style={s.navRight}>
-                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
-                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
-
-            <ConfirmDialog
-                open={confirmLogout}
-                title="Sair da conta"
-                message="Tem certeza que deseja sair da sua conta?"
-                onConfirm={handleLogout}
-                onCancel={() => setConfirmLogout(false)}
-            />
 
             <main style={s.main}>
                 {loading && <p style={{ color: "#888" }}>Carregando perfil…</p>}
@@ -216,45 +178,6 @@ export default function ProfilePage({
                             )}
                         </section>
 
-                        {/* Playlists do usuário */}
-                        <section style={{ marginBottom: 40 }}>
-                            <h2 style={s.sectionTitle}>
-                                {isOwnProfile ? "Minhas Playlists" : `Playlists de ${profile.username}`}
-                            </h2>
-
-                            {!playlistsLoading && visiblePlaylists.length === 0 && (
-                                <div style={s.emptyBox}>
-                                    <p style={{ color: "#888", margin: 0 }}>
-                                        {isOwnProfile ? "Você ainda não criou nenhuma playlist." : "Nenhuma playlist pública ainda."}
-                                    </p>
-                                    {isOwnProfile && (
-                                        <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
-                                            Crie a primeira na tela de Playlists!
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {visiblePlaylists.length > 0 && (
-                                <div style={s.playlistGrid}>
-                                    {visiblePlaylists.map((p) => (
-                                        <div key={p.id} style={s.playlistCard} onClick={() => onOpenPlaylist(p.id)}>
-                                            <div
-                                                style={{
-                                                    ...s.playlistCover,
-                                                    backgroundImage: p.cover_url ? `url(${p.cover_url})` : undefined,
-                                                }}
-                                            />
-                                            <p style={s.playlistName}>{p.name}</p>
-                                            {isOwnProfile && p.is_public === false && (
-                                                <span style={s.privateTag}>Privada</span>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
                         {/* Reviews do usuário */}
                         <section>
                             <h2 style={s.sectionTitle}>
@@ -275,31 +198,7 @@ export default function ProfilePage({
                             ) : (
                                 <div style={s.reviewList}>
                                     {profile.reviews.map((review) => (
-                                        <ReviewCard
-                                            key={review.id}
-                                            review={review}
-                                            canEdit={isOwnProfile}
-                                            onOpenSong={onOpenSong}
-                                            onUpdated={(updated) =>
-                                                setProfile((prev) =>
-                                                    prev
-                                                        ? {
-                                                              ...prev,
-                                                              reviews: prev.reviews.map((r) =>
-                                                                  r.id === review.id ? { ...r, ...updated } : r
-                                                              ),
-                                                          }
-                                                        : prev
-                                                )
-                                            }
-                                            onDeleted={() =>
-                                                setProfile((prev) =>
-                                                    prev
-                                                        ? { ...prev, reviews: prev.reviews.filter((r) => r.id !== review.id) }
-                                                        : prev
-                                                )
-                                            }
-                                        />
+                                        <ReviewCard key={review.id} review={review} />
                                     ))}
                                 </div>
                             )}
@@ -359,115 +258,18 @@ export default function ProfilePage({
     );
 }
 
-function ReviewCard({
-    review,
-    canEdit,
-    onOpenSong,
-    onUpdated,
-    onDeleted,
-}: {
-    review: Review;
-    canEdit: boolean;
-    onOpenSong?: (songId: string) => void;
-    onUpdated: (updated: Partial<Review>) => void;
-    onDeleted: () => void;
-}) {
+function ReviewCard({ review }: { review: Review }) {
     const date = review.create_time
         ? new Date(review.create_time).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
         : null;
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [note, setNote] = useState(review.note);
-    const [text, setText] = useState(review.text);
-    const [submitting, setSubmitting] = useState(false);
-    const [errorMsg, setErrorMsg] = useState("");
-
-    function startEdit() {
-        setNote(review.note);
-        setText(review.text);
-        setErrorMsg("");
-        setIsEditing(true);
-    }
-
-    async function handleSave() {
-        if (!note) { setErrorMsg("Selecione uma nota."); return; }
-        setSubmitting(true);
-        setErrorMsg("");
-        try {
-            await reviewService.update(review.id, { note, text });
-            onUpdated({ note, text });
-            setIsEditing(false);
-        } catch (err: any) {
-            setErrorMsg(err.response?.data?.message ?? "Erro ao atualizar avaliação.");
-        } finally {
-            setSubmitting(false);
-        }
-    }
-
-    async function handleDelete() {
-        if (!window.confirm("Tem certeza que deseja excluir esta avaliação?")) return;
-        try {
-            await reviewService.delete(review.id);
-            onDeleted();
-        } catch (err: any) {
-            setErrorMsg(err.response?.data?.message ?? "Erro ao excluir avaliação.");
-        }
-    }
-
     return (
         <div style={s.reviewCard}>
-            {(review.music_title || review.artist_name) && (
-                <p
-                    style={{
-                        ...s.reviewAbout,
-                        cursor: review.music_id && onOpenSong ? "pointer" : "default",
-                    }}
-                    onClick={() => review.music_id && onOpenSong?.(review.music_id)}
-                >
-                    {review.music_title
-                        ? `🎵 ${review.music_title}${review.artist_name ? ` · ${review.artist_name}` : ""}`
-                        : `🎤 ${review.artist_name}`}
-                </p>
-            )}
             <div style={s.reviewTop}>
-                {isEditing ? (
-                    <StarPickerSmall value={note} onChange={setNote} />
-                ) : (
-                    <Stars note={review.note} />
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
-                    {date && !isEditing && <span style={s.reviewDate}>{date}</span>}
-                    {canEdit && !isEditing && (
-                        <span style={s.reviewActions}>
-                            <span style={s.reviewActionLink} onClick={startEdit}>Editar</span>
-                            <span style={s.reviewActionLink} onClick={handleDelete}>Excluir</span>
-                        </span>
-                    )}
-                </div>
+                <Stars note={review.note} />
+                {date && <span style={s.reviewDate}>{date}</span>}
             </div>
-
-            {isEditing ? (
-                <div>
-                    <textarea
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        style={s.editTextarea}
-                        rows={3}
-                        maxLength={1000}
-                    />
-                    {errorMsg && <p style={{ fontSize: 13, color: "red", margin: "4px 0" }}>{errorMsg}</p>}
-                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                        <button type="button" disabled={submitting} style={s.saveBtn} onClick={handleSave}>
-                            {submitting ? "Salvando…" : "Salvar"}
-                        </button>
-                        <button type="button" style={s.cancelBtn} onClick={() => setIsEditing(false)}>
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <p style={s.reviewText}>{review.text}</p>
-            )}
+            <p style={s.reviewText}>{review.text}</p>
         </div>
     );
 }
@@ -482,21 +284,6 @@ function Stars({ note }: { note: number }) {
     );
 }
 
-// Estrelas clicáveis usadas na edição inline da review no perfil
-function StarPickerSmall({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-    return (
-        <div style={{ display: "flex", gap: 4 }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-                <span
-                    key={i}
-                    onClick={() => onChange(i)}
-                    style={{ fontSize: 20, cursor: "pointer", color: i <= value ? "#d44800" : "#e2e2e2" }}
-                >★</span>
-            ))}
-        </div>
-    );
-}
-
 const s: Record<string, React.CSSProperties> = {
     page: { minHeight: "100vh", background: "#fff", fontFamily: "Inter, sans-serif" },
     nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 32px", borderBottom: "1px solid #eee", gap: 24 },
@@ -505,7 +292,6 @@ const s: Record<string, React.CSSProperties> = {
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
     navLinkActive: { color: "#111", fontSize: 14, fontWeight: 700, background: "#f0f0f0", padding: "6px 12px", borderRadius: 8, cursor: "pointer" },
     navRight: { display: "flex", alignItems: "center", gap: 12 },
-    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 880, margin: "0 auto" },
 
@@ -524,23 +310,11 @@ const s: Record<string, React.CSSProperties> = {
     followingBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111", flexShrink: 0 },
 
     sectionTitle: { fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 16 },
-
-    playlistGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 18 },
-    playlistCard: { cursor: "pointer", position: "relative" },
-    playlistCover: { width: "100%", aspectRatio: "1 / 1", borderRadius: 10, backgroundColor: "#222", backgroundSize: "cover", backgroundPosition: "center", marginBottom: 6 },
-    playlistName: { fontSize: 14, fontWeight: 700, color: "#111", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-    privateTag: { fontSize: 11, color: "#888", background: "#f0f0f0", padding: "2px 8px", borderRadius: 10, marginTop: 4, display: "inline-block" },
     reviewList: { display: "flex", flexDirection: "column", gap: 12 },
     reviewCard: { border: "1px solid #eee", borderRadius: 12, padding: 18 },
-    reviewAbout: { fontSize: 13, fontWeight: 700, color: "#555", margin: "0 0 8px" },
     reviewTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
     reviewDate: { fontSize: 12, color: "#aaa" },
     reviewText: { fontSize: 14, color: "#333", margin: 0, lineHeight: 1.5 },
-    reviewActions: { display: "flex", gap: 10 },
-    reviewActionLink: { fontSize: 12, color: "#d44800", fontWeight: 700, cursor: "pointer" },
-    editTextarea: { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "Inter, sans-serif", boxSizing: "border-box" },
-    saveBtn: { background: "#d44800", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
-    cancelBtn: { background: "#fff", color: "#555", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
 
     emptyBox: { border: "1.5px dashed #ddd", borderRadius: 12, padding: 32, textAlign: "center" },
     retryBtn: { marginTop: 12, border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#111" },

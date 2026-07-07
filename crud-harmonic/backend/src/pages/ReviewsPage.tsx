@@ -1,27 +1,19 @@
 import { useEffect, useState } from "react";
 import { reviewService, type FeedReview } from "../services/reviewService";
 import api from "../services/api";
-import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function ReviewsPage({
     onBack,
-    onGoHome,
-    onOpenLists,
     onOpenProfile,
-    onOpenSong,
     onLogout,
 }: {
     onBack: () => void;
-    onGoHome: () => void;
-    onOpenLists: () => void;
     onOpenProfile: (userId: number) => void;
-    onOpenSong?: (songId: string) => void;
     onLogout: () => void;
 }) {
     const [reviews, setReviews] = useState<FeedReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
 
@@ -58,27 +50,18 @@ export default function ReviewsPage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLinkActive}>📝 Reviews</span>
-                    <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
+                    <span style={s.navLink}>📋 Lists</span>
                     <span style={s.navLink} onClick={() => loggedUser?.id && onOpenProfile(loggedUser.id)}>
                         👤 {loggedUser?.username ?? "Profile"}
                     </span>
                 </div>
                 <div style={s.navRight}>
-                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
-                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
-
-            <ConfirmDialog
-                open={confirmLogout}
-                title="Sair da conta"
-                message="Tem certeza que deseja sair da sua conta?"
-                onConfirm={handleLogout}
-                onCancel={() => setConfirmLogout(false)}
-            />
 
             <main style={s.main}>
                 <h2 style={s.sectionTitle}>Reviews da comunidade</h2>
@@ -109,15 +92,6 @@ export default function ReviewsPage({
                                 review={review}
                                 loggedUserId={loggedUser?.id}
                                 onOpenProfile={onOpenProfile}
-                                onOpenSong={onOpenSong}
-                                onUpdated={(updated) =>
-                                    setReviews((prev) =>
-                                        prev.map((r) => (r.id === review.id ? { ...r, ...updated } : r))
-                                    )
-                                }
-                                onDeleted={() =>
-                                    setReviews((prev) => prev.filter((r) => r.id !== review.id))
-                                }
                             />
                         ))}
                     </div>
@@ -131,26 +105,14 @@ function ReviewCard({
     review,
     loggedUserId,
     onOpenProfile,
-    onOpenSong,
-    onUpdated,
-    onDeleted,
 }: {
     review: FeedReview;
     loggedUserId: number;
     onOpenProfile: (userId: number) => void;
-    onOpenSong?: (songId: string) => void;
-    onUpdated: (updated: Partial<FeedReview>) => void;
-    onDeleted: () => void;
 }) {
     const [liked, setLiked] = useState(false);
     const [totalLikes, setTotalLikes] = useState(0);
     const [loadingLike, setLoadingLike] = useState(false);
-
-    const [isEditing, setIsEditing] = useState(false);
-    const [editNote, setEditNote] = useState(review.note);
-    const [editText, setEditText] = useState(review.text);
-    const [editSubmitting, setEditSubmitting] = useState(false);
-    const [editMsg, setEditMsg] = useState("");
 
     // busca contagem de likes ao montar o card
     useEffect(() => {
@@ -190,38 +152,6 @@ function ReviewCard({
         }
     }
 
-    function startEdit() {
-        setEditNote(review.note);
-        setEditText(review.text);
-        setEditMsg("");
-        setIsEditing(true);
-    }
-
-    async function handleSaveEdit() {
-        if (!editNote) { setEditMsg("Selecione uma nota."); return; }
-        setEditSubmitting(true);
-        setEditMsg("");
-        try {
-            await reviewService.update(review.id, { note: editNote, text: editText });
-            onUpdated({ note: editNote, text: editText });
-            setIsEditing(false);
-        } catch (err: any) {
-            setEditMsg(err.response?.data?.message ?? "Erro ao atualizar avaliação.");
-        } finally {
-            setEditSubmitting(false);
-        }
-    }
-
-    async function handleDelete() {
-        if (!window.confirm("Tem certeza que deseja excluir esta avaliação?")) return;
-        try {
-            await reviewService.delete(review.id);
-            onDeleted();
-        } catch (err: any) {
-            setEditMsg(err.response?.data?.message ?? "Erro ao excluir avaliação.");
-        }
-    }
-
     const date = review.create_time
         ? new Date(review.create_time).toLocaleDateString("pt-BR", {
               day: "2-digit",
@@ -249,58 +179,19 @@ function ReviewCard({
                         {review.username}
                     </span>
                     {review.music_title && (
-                        <span
-                            style={{ ...s.aboutText, cursor: review.music_id && onOpenSong ? "pointer" : "default" }}
-                            onClick={() => review.music_id && onOpenSong?.(review.music_id)}
-                        > fez uma review "{review.music_title}"</span>
+                        <span style={s.aboutText}> fez uma review "{review.music_title}"</span>
                     )}
                     {!review.music_title && review.artist_name && (
                         <span style={s.aboutText}> fez uma review {review.artist_name}</span>
                     )}
                     <div style={s.reviewMeta}>
-                        {!isEditing && <Stars note={review.note} />}
-                        {date && !isEditing && <span style={s.reviewDate}>{date}</span>}
-                        {isOwnReview && !isEditing && (
-                            <span style={s.reviewActions}>
-                                <span style={s.reviewActionLink} onClick={startEdit}>Editar</span>
-                                <span style={s.reviewActionLink} onClick={handleDelete}>Excluir</span>
-                            </span>
-                        )}
+                        <Stars note={review.note} />
+                        {date && <span style={s.reviewDate}>{date}</span>}
                     </div>
                 </div>
             </div>
 
-            {isEditing ? (
-                <div style={{ marginTop: 4 }}>
-                    <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <span
-                                key={i}
-                                onClick={() => setEditNote(i)}
-                                style={{ fontSize: 20, cursor: "pointer", color: i <= editNote ? "#d44800" : "#e2e2e2" }}
-                            >★</span>
-                        ))}
-                    </div>
-                    <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        style={s.editTextarea}
-                        rows={3}
-                        maxLength={1000}
-                    />
-                    {editMsg && <p style={{ fontSize: 13, color: "red", margin: "4px 0" }}>{editMsg}</p>}
-                    <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 12 }}>
-                        <button type="button" disabled={editSubmitting} style={s.saveBtn} onClick={handleSaveEdit}>
-                            {editSubmitting ? "Salvando…" : "Salvar"}
-                        </button>
-                        <button type="button" style={s.cancelBtn} onClick={() => setIsEditing(false)}>
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <p style={s.reviewText}>{review.text}</p>
-            )}
+            <p style={s.reviewText}>{review.text}</p>
 
             {/* Botão de like */}
             <div style={s.likeRow}>
@@ -343,7 +234,6 @@ const s: Record<string, React.CSSProperties> = {
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
     navLinkActive: { color: "#111", fontSize: 14, fontWeight: 700, background: "#f0f0f0", padding: "6px 12px", borderRadius: 8, cursor: "pointer" },
     navRight: { display: "flex", alignItems: "center", gap: 12 },
-    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 720, margin: "0 auto" },
     sectionTitle: { fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 20 },
@@ -359,11 +249,6 @@ const s: Record<string, React.CSSProperties> = {
     aboutText: { fontSize: 14, color: "#666" },
     reviewMeta: { display: "flex", alignItems: "center", gap: 10, marginTop: 4 },
     reviewDate: { fontSize: 12, color: "#aaa" },
-    reviewActions: { display: "flex", gap: 10, marginLeft: "auto" },
-    reviewActionLink: { fontSize: 12, color: "#d44800", fontWeight: 700, cursor: "pointer" },
-    editTextarea: { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "Inter, sans-serif", boxSizing: "border-box" },
-    saveBtn: { background: "#d44800", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
-    cancelBtn: { background: "#fff", color: "#555", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
     reviewText: { fontSize: 14, color: "#333", margin: "0 0 12px", lineHeight: 1.5 },
     likeRow: { display: "flex", alignItems: "center", gap: 8, marginTop: 4 },
     likeBtn: {
