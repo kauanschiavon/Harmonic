@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UserRepository } from "../repositories/UserRepository";
 import { ReviewRepository } from "../repositories/ReviewRepository";
 import { AuthService } from "../services/authservice";
+import { UserService } from "../services/userservice";
 
 const repository = new UserRepository();
 const reviewRepository = new ReviewRepository();
@@ -110,11 +111,22 @@ export class UserController {
     async delete(req: Request, res: Response) {
         const { id } = req.params;
 
-        await repository.delete(Number(id));
+        try {
+            await UserService.deleteUserCascade(Number(id));
 
-        return res.status(200).json({
-            message: "Usuário deletado"
-        });
+            return res.status(200).json({
+                message: "Usuário deletado"
+            });
+        } catch (error) {
+            if (error instanceof Error && error.message === "Usuário não encontrado") {
+                return res.status(404).json({ message: error.message });
+            }
+
+            console.error(error);
+            return res.status(500).json({
+                message: "Não foi possível excluir o usuário"
+            });
+        }
     }
 
     // ----------esquecer senha(dispara email)---------------:
