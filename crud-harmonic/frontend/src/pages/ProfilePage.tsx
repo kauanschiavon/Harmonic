@@ -36,7 +36,6 @@ export default function ProfilePage({
     const [listLoading, setListLoading] = useState(false);
 
     const [editingProfile, setEditingProfile] = useState(false);
-    const [editingProfile, setEditingProfile] = useState(false);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [playlistsLoading, setPlaylistsLoading] = useState(true);
     const [confirmLogout, setConfirmLogout] = useState(false);
