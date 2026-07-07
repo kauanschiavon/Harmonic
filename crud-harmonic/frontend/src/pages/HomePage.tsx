@@ -1,21 +1,11 @@
 import { useEffect, useState } from "react";
-import { spotifyService, type SpotifyAlbum } from "../services/spotifyService";
+import { spotifyService, type SpotifyAlbum, type SpotifyTrack } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
 
-export default function HomePage({
-    onLogout,
-    onOpenProfile,
-    onOpenReviews,
-    onOpenSong,
-}: {
-    onLogout: () => void;
-    onOpenProfile: (userId: number) => void;
-    onOpenReviews: () => void;
-    onOpenSong: (songId: string) => void;
-}) {
+export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpenLists, onOpenUsers, onOpenSong }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void; onOpenLists: () => void; onOpenUsers: () => void; onOpenSong: (songId: string) => void }) {
     const [query, setQuery] = useState("");
     const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
-    const [tracks, setTracks] = useState<any[]>([]);
+    const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(false);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const user = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
@@ -69,8 +59,11 @@ export default function HomePage({
                     <span style={s.navLinkActive}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
-                    <span style={s.navLink}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenLists}>📋 Lists</span>
                     <span style={s.navLink} onClick={() => user?.id && onOpenProfile(user.id)}>👤 {user?.username ?? "Profile"}</span>
+                    {user?.role === "admin" && (
+                        <span style={s.navLink} onClick={onOpenUsers}>🛠️ Admin</span>
+                    )}
                 </div>
                 <div style={s.navRight}>
                     <form onSubmit={handleSearch} style={{ position: "relative" }}>
@@ -87,23 +80,19 @@ export default function HomePage({
             </nav>
 
             <main style={s.main}>
-                {/* Resultados de músicas */}
+                {/* Músicas encontradas na busca — clique para ver detalhes e avaliar */}
                 {tracks.length > 0 && (
                     <section style={{ marginBottom: 48 }}>
                         <h2 style={s.sectionTitle}>Músicas</h2>
                         <div style={s.grid}>
                             {tracks.map((track) => (
-                                <TrackCard
-                                    key={track.id}
-                                    track={track}
-                                    onClick={() => onOpenSong(track.id)}
-                                />
+                                <TrackCard key={track.id} track={track} onOpenSong={onOpenSong} />
                             ))}
                         </div>
                     </section>
                 )}
 
-                {/* Resultados de álbuns */}
+                {/* Álbuns encontrados na busca */}
                 {albums.length > 0 && (
                     <section style={{ marginBottom: 48 }}>
                         <h2 style={s.sectionTitle}>Álbuns</h2>
@@ -140,10 +129,9 @@ export default function HomePage({
     );
 }
 
-// Card clicável para músicas (tracks)
-function TrackCard({ track, onClick }: { track: any; onClick: () => void }) {
+function TrackCard({ track, onOpenSong }: { track: SpotifyTrack; onOpenSong: (songId: string) => void }) {
     return (
-        <div style={{ ...s.card, cursor: "pointer" }} onClick={onClick}>
+        <div style={{ ...s.card, cursor: "pointer" }} onClick={() => onOpenSong(track.id)}>
             <div style={{ ...s.coverWrap, backgroundImage: `url(${track.image})` }} />
             <p style={s.cardTitle}>{track.name}</p>
             <p style={s.cardSubtitle}>{track.artist}</p>

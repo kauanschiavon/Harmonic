@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import { reviewService, type FeedReview } from "../services/reviewService";
+import { playlistService, type Playlist } from "../services/playlistService";
 
-export default function ReviewsPage({
+export default function ListsPage({
     onBack,
-    onOpenLists,
+    onOpenReviews,
     onOpenProfile,
     onLogout,
 }: {
     onBack: () => void;
-    onOpenLists: () => void;
+    onOpenReviews: () => void;
     onOpenProfile: (userId: number) => void;
     onLogout: () => void;
 }) {
-    const [reviews, setReviews] = useState<FeedReview[]>([]);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -26,10 +26,10 @@ export default function ReviewsPage({
         setLoading(true);
         setError("");
         try {
-            const data = await reviewService.getFeed();
-            setReviews(data);
+            const data = await playlistService.findAll();
+            setPlaylists(data);
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? "Não foi possível carregar as Reviews.");
+            setError(err?.response?.data?.message ?? "Não foi possível carregar as Lists.");
         } finally {
             setLoading(false);
         }
@@ -54,8 +54,8 @@ export default function ReviewsPage({
                 <div style={s.navLinks}>
                     <span style={s.navLink} onClick={onBack}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
-                    <span style={s.navLinkActive}>📝 Reviews</span>
-                    <span style={s.navLink} onClick={onOpenLists}>📋 Lists</span>
+                    <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
+                    <span style={s.navLinkActive}>📋 Lists</span>
                     <span style={s.navLink} onClick={() => loggedUser?.id && onOpenProfile(loggedUser.id)}>
                         👤 {loggedUser?.username ?? "Profile"}
                     </span>
@@ -66,9 +66,9 @@ export default function ReviewsPage({
             </nav>
 
             <main style={s.main}>
-                <h2 style={s.sectionTitle}>Reviews da comunidade</h2>
+                <h2 style={s.sectionTitle}>Playlists da comunidade</h2>
 
-                {loading && <p style={{ color: "#888" }}>Carregando Reviews…</p>}
+                {loading && <p style={{ color: "#888" }}>Carregando Lists…</p>}
 
                 {!loading && error && (
                     <div style={s.emptyBox}>
@@ -77,19 +77,19 @@ export default function ReviewsPage({
                     </div>
                 )}
 
-                {!loading && !error && reviews.length === 0 && (
+                {!loading && !error && playlists.length === 0 && (
                     <div style={s.emptyBox}>
-                        <p style={{ color: "#888", margin: 0 }}>Nenhuma Review ainda.</p>
+                        <p style={{ color: "#888", margin: 0 }}>Nenhuma playlist pública ainda.</p>
                         <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
-                            Procure um álbum na Home e seja o primeiro a fazer um Review!
+                            Procure um álbum na Home e crie a primeira playlist!
                         </p>
                     </div>
                 )}
 
-                {!loading && !error && reviews.length > 0 && (
-                    <div style={s.reviewList}>
-                        {reviews.map((review) => (
-                            <ReviewCard key={review.id} review={review} onOpenProfile={onOpenProfile} />
+                {!loading && !error && playlists.length > 0 && (
+                    <div style={s.listGrid}>
+                        {playlists.map((playlist) => (
+                            <PlaylistListCard key={playlist.id} playlist={playlist} onOpenProfile={onOpenProfile} />
                         ))}
                     </div>
                 )}
@@ -98,44 +98,41 @@ export default function ReviewsPage({
     );
 }
 
-function ReviewCard({ review, onOpenProfile }: { review: FeedReview; onOpenProfile: (userId: number) => void }) {
-    const date = review.create_time
-        ? new Date(review.create_time).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+function PlaylistListCard({ playlist, onOpenProfile }: { playlist: Playlist; onOpenProfile: (userId: number) => void }) {
+    const date = playlist.created_at
+        ? new Date(playlist.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
         : null;
 
     return (
-        <div style={s.reviewCard}>
-            <div style={s.reviewHeader}>
-                <div
-                    style={{
-                        ...s.avatar,
-                        backgroundImage: review.user_photo ? `url(${review.user_photo})` : undefined,
-                    }}
-                    onClick={() => onOpenProfile(review.user_id)}
-                >
-                    {!review.user_photo && (review.username?.[0]?.toUpperCase() ?? "?")}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={s.authorName} onClick={() => onOpenProfile(review.user_id)}>{review.username}</span>
-                    {review.music_title && <span style={s.aboutText}> fez uma review "{review.music_title}"</span>}
-                    {!review.music_title && review.artist_name && <span style={s.aboutText}> fez uma review {review.artist_name}</span>}
-                    <div style={s.reviewMeta}>
-                        <Stars note={review.note} />
-                        {date && <span style={s.reviewDate}>{date}</span>}
+        <div style={s.listCard}>
+            <div
+                style={{
+                    ...s.cover,
+                    backgroundColor: "#222",
+                    backgroundImage: playlist.cover_url ? `url(${playlist.cover_url})` : undefined,
+                }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={s.listHeader}>
+                    <div
+                        style={{
+                            ...s.avatar,
+                            backgroundImage: playlist.user_photo ? `url(${playlist.user_photo})` : undefined,
+                        }}
+                        onClick={() => onOpenProfile(playlist.user_id)}
+                    >
+                        {!playlist.user_photo && (playlist.username?.[0]?.toUpperCase() ?? "?")}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={s.listTitle}>{playlist.name}</p>
+                        <span style={s.authorName} onClick={() => onOpenProfile(playlist.user_id)}>
+                            por {playlist.username}
+                        </span>
+                        {date && <span style={s.listDate}> · {date}</span>}
                     </div>
                 </div>
+                {playlist.description && <p style={s.listDescription}>{playlist.description}</p>}
             </div>
-            <p style={s.reviewText}>{review.text}</p>
-        </div>
-    );
-}
-
-function Stars({ note }: { note: number }) {
-    return (
-        <div style={{ display: "flex", gap: 2 }} title={`${note}/5`}>
-            {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} style={{ color: i < note ? "#d44800" : "#e2e2e2", fontSize: 13, lineHeight: 1 }}>★</span>
-            ))}
         </div>
     );
 }
@@ -152,18 +149,18 @@ const s: Record<string, React.CSSProperties> = {
     main: { padding: "32px 32px 64px", maxWidth: 720, margin: "0 auto" },
 
     sectionTitle: { fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 20 },
-    reviewList: { display: "flex", flexDirection: "column", gap: 16 },
-    reviewCard: { border: "1px solid #eee", borderRadius: 12, padding: 18 },
-    reviewHeader: { display: "flex", gap: 12, marginBottom: 10 },
+    listGrid: { display: "flex", flexDirection: "column", gap: 16 },
+    listCard: { display: "flex", gap: 16, border: "1px solid #eee", borderRadius: 12, padding: 18 },
+    cover: { width: 72, height: 72, borderRadius: 10, backgroundSize: "cover", backgroundPosition: "center", flexShrink: 0 },
+    listHeader: { display: "flex", gap: 10, alignItems: "center" },
     avatar: {
-        width: 40, height: 40, borderRadius: "50%", backgroundColor: "#111", backgroundSize: "cover", backgroundPosition: "center",
-        display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, fontWeight: 800, flexShrink: 0, cursor: "pointer",
+        width: 32, height: 32, borderRadius: "50%", backgroundColor: "#111", backgroundSize: "cover", backgroundPosition: "center",
+        display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0, cursor: "pointer",
     },
-    authorName: { fontWeight: 700, fontSize: 14, color: "#111", cursor: "pointer" },
-    aboutText: { fontSize: 14, color: "#666" },
-    reviewMeta: { display: "flex", alignItems: "center", gap: 10, marginTop: 4 },
-    reviewDate: { fontSize: 12, color: "#aaa" },
-    reviewText: { fontSize: 14, color: "#333", margin: 0, lineHeight: 1.5 },
+    listTitle: { fontWeight: 700, fontSize: 15, color: "#111", margin: 0 },
+    authorName: { fontSize: 13, color: "#777", cursor: "pointer" },
+    listDate: { fontSize: 12, color: "#aaa" },
+    listDescription: { fontSize: 14, color: "#333", margin: "8px 0 0", lineHeight: 1.5 },
 
     emptyBox: { border: "1.5px dashed #ddd", borderRadius: 12, padding: 32, textAlign: "center" },
     retryBtn: { marginTop: 12, border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#111" },
