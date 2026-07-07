@@ -202,7 +202,7 @@ function ReviewCard({
         setEditSubmitting(true);
         setEditMsg("");
         try {
-            await reviewService.update(review.id, { note: editNote, text: editText });
+            await reviewService.update(review.id, {note: parseInt(editNote),text: editText});
             onUpdated({ note: editNote, text: editText });
             setIsEditing(false);
         } catch (err: any) {

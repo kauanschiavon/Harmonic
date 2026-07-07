@@ -24,29 +24,24 @@ export class ReviewController {
 
   async update(req: Request, res: Response) {
   try {
-    const { id } = req.params;
+    console.log("ID:", req.params.id);
+    console.log("BODY:", req.body);
 
-    const review = await reviewService.findById(Number(id));
+    const updated = await reviewService.update(
+      Number(req.params.id),
+      req.body
+    );
 
-    // Só o dono da review (ou um admin) pode editá-la
-    if (
-      req.user &&
-      req.user.role !== "admin" &&
-      req.user.id !== review.user_id
-    ) {
-      return res.status(403).json({
-        message: "Você não tem permissão para editar esta review",
-      });
-    }
-
-    const updated = await reviewService.update(Number(id), req.body);
-
-    return res.json(updated ?? { message: "Review atualizada" });
+    return res.json(updated);
   } catch (err: any) {
-    return res.status(400).json({ message: err.message });
+    console.error(err);
+
+    return res.status(400).json({
+      message: err.message,
+      issues: err.issues,
+    });
   }
 }
-
   async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;
