@@ -6,6 +6,7 @@ const controller = new PlaylistController();
 
 //playlist
 router.post("/playlists", controller.create);
+router.get("/playlists", controller.findAll);
 router.get("/playlists/user/:userId", controller.listByUser);
 router.get("/playlists/:id", controller.getById);
 router.patch("/playlists/:id", controller.update);

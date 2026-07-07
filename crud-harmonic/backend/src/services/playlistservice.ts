@@ -23,6 +23,11 @@ export class PlaylistService {
     return await PlaylistService.repository.findByUser(userId);
   }
 
+  // feed público — todas as playlists com dados do autor (usado na página de Lists)
+  static async findAll() {
+    return await PlaylistService.repository.findAllWithAuthors();
+  }
+
   static async getById(id: number) {
     const playlist = await PlaylistService.repository.findById(id);
     if (!playlist) throw new Error("Playlist não encontrada");

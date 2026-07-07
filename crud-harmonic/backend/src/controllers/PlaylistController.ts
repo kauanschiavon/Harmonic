@@ -26,6 +26,18 @@ export class PlaylistController {
     }
   }
 
+  // GET /playlists — feed público (usado na página de Lists)
+  async findAll(req: Request, res: Response) {
+    try {
+      const playlists = await PlaylistService.findAll();
+      return res.status(200).json(playlists);
+    } catch (error) {
+      return res.status(400).json({
+        message: error instanceof Error ? error.message : "Erro interno"
+      });
+    }
+  }
+
   async getById(req: Request, res: Response) {
     try {
       const id = Number(req.params.id as string);
