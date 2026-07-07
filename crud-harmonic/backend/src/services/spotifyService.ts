@@ -40,3 +40,11 @@ export const getTrack = async (spotifyId: string) => {
   })
   return response.data
 }
+
+export const getAlbum = async (spotifyId: string) => {
+  const token = await getToken()
+  const response = await axios.get(`https://api.spotify.com/v1/albums/${spotifyId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
