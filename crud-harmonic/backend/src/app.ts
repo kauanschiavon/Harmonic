@@ -8,11 +8,8 @@ import playlistrouter from "./routes/PlaylistRoutes"
 import commentrouter from "./routes/CommentRoutes"
 import reviewlikerouter from "./routes/ReviewlikeRoutes"
 import artistrouter from "./routes/ArtistRoutes"
-import playlistrouter from "./routes/PlaylistRoutes";
-import reviewlikerouter from "./routes/ReviewlikeRoutes";
 import songrouter from "./routes/SongRoutes";
 import "dotenv/config";
-import reviewlikerouter from "./routes/ReviewlikeRoutes";
 import albumrouter from "./routes/AlbumRoutes";
 
 
