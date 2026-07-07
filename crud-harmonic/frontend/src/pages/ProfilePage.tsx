@@ -2,16 +2,19 @@ import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
 import { EditUserModal } from "./UsersPage";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function ProfilePage({
     userId,
     onBack,
+    onGoHome,
     onOpenReviews,
     onOpenProfile,
     onLogout,
 }: {
     userId: number;
     onBack: () => void;
+    onGoHome: () => void;
     onOpenReviews: () => void;
     onOpenProfile: (userId: number) => void;
     onLogout: () => void;
@@ -28,6 +31,7 @@ export default function ProfilePage({
     const [listLoading, setListLoading] = useState(false);
 
     const [editingProfile, setEditingProfile] = useState(false);
+    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
     const isOwnProfile = loggedUser?.id === userId;
@@ -115,16 +119,25 @@ export default function ProfilePage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
                     <span style={s.navLink}>📋 Lists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
                 </div>
                 <div style={s.navRight}>
-                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
+                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
+
+            <ConfirmDialog
+                open={confirmLogout}
+                title="Sair da conta"
+                message="Tem certeza que deseja sair da sua conta?"
+                onConfirm={handleLogout}
+                onCancel={() => setConfirmLogout(false)}
+            />
 
             <main style={s.main}>
                 {loading && <p style={{ color: "#888" }}>Carregando perfil…</p>}
@@ -292,6 +305,7 @@ const s: Record<string, React.CSSProperties> = {
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
     navLinkActive: { color: "#111", fontSize: 14, fontWeight: 700, background: "#f0f0f0", padding: "6px 12px", borderRadius: 8, cursor: "pointer" },
     navRight: { display: "flex", alignItems: "center", gap: 12 },
+    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 880, margin: "0 auto" },
 

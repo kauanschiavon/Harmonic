@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { spotifyService, type SpotifyAlbum, type SpotifyTrack } from "../services/spotifyService";
 import { playlistService, type Playlist } from "../services/playlistService";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpenUsers, onOpenSong, onOpenAlbum }: { onLogout: () => void; onOpenProfile: (userId: number) => void; onOpenReviews: () => void; onOpenUsers: () => void; onOpenSong: (songId: string) => void; onOpenAlbum: (albumId: string) => void }) {
     const [query, setQuery] = useState("");
@@ -8,6 +9,7 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
     const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
     const [loading, setLoading] = useState(false);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [confirmLogout, setConfirmLogout] = useState(false);
     const user = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
 
     useEffect(() => {
@@ -75,9 +77,17 @@ export default function HomePage({ onLogout, onOpenProfile, onOpenReviews, onOpe
                             style={s.searchInput}
                         />
                     </form>
-                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
+
+            <ConfirmDialog
+                open={confirmLogout}
+                title="Sair da conta"
+                message="Tem certeza que deseja sair da sua conta?"
+                onConfirm={handleLogout}
+                onCancel={() => setConfirmLogout(false)}
+            />
 
             <main style={s.main}>
                 {/* Músicas encontradas na busca — clique para ver detalhes e avaliar */}

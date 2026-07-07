@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import { reviewService, type FeedReview } from "../services/reviewService";
 import api from "../services/api";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export default function ReviewsPage({
     onBack,
+    onGoHome,
     onOpenProfile,
     onLogout,
 }: {
     onBack: () => void;
+    onGoHome: () => void;
     onOpenProfile: (userId: number) => void;
     onLogout: () => void;
 }) {
     const [reviews, setReviews] = useState<FeedReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const loggedUser = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
 
@@ -50,7 +54,7 @@ export default function ReviewsPage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
                     <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLinkActive}>📝 Reviews</span>
                     <span style={s.navLink}>📋 Lists</span>
@@ -59,9 +63,18 @@ export default function ReviewsPage({
                     </span>
                 </div>
                 <div style={s.navRight}>
-                    <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
+                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
+                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
                 </div>
             </nav>
+
+            <ConfirmDialog
+                open={confirmLogout}
+                title="Sair da conta"
+                message="Tem certeza que deseja sair da sua conta?"
+                onConfirm={handleLogout}
+                onCancel={() => setConfirmLogout(false)}
+            />
 
             <main style={s.main}>
                 <h2 style={s.sectionTitle}>Reviews da comunidade</h2>
@@ -234,6 +247,7 @@ const s: Record<string, React.CSSProperties> = {
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
     navLinkActive: { color: "#111", fontSize: 14, fontWeight: 700, background: "#f0f0f0", padding: "6px 12px", borderRadius: 8, cursor: "pointer" },
     navRight: { display: "flex", alignItems: "center", gap: 12 },
+    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 720, margin: "0 auto" },
     sectionTitle: { fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 20 },
