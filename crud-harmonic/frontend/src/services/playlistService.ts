@@ -23,7 +23,12 @@ export const playlistService = {
 
     // POST /playlists
     async create(data: CreatePlaylistData): Promise<Playlist> {
-        const response = await api.post<Playlist>("/playlists", data);
+        // o backend espera o campo "public", não "is_public"
+        const { is_public, ...rest } = data;
+        const response = await api.post<Playlist>("/playlists", {
+            ...rest,
+            public: is_public,
+        });
         return response.data;
     },
 
