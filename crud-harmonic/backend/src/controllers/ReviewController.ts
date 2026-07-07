@@ -25,8 +25,15 @@ export class ReviewController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      await ReviewService.update(Number(id), req.body);
-      return res.json({ message: "Review atualizada" });
+      const review = await ReviewService.findById(Number(id));
+
+      // só o dono da review (ou um admin) pode editá-la
+      if (req.user && req.user.role !== "admin" && req.user.id !== review.user_id) {
+        return res.status(403).json({ message: "Você não tem permissão para editar esta review" });
+      }
+
+      const updated = await ReviewService.update(Number(id), req.body);
+      return res.json(updated ?? { message: "Review atualizada" });
     } catch (err: any) {
       return res.status(400).json({ message: err.message });
     }
@@ -35,6 +42,13 @@ export class ReviewController {
   async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const review = await ReviewService.findById(Number(id));
+
+      // só o dono da review (ou um admin) pode excluí-la
+      if (req.user && req.user.role !== "admin" && req.user.id !== review.user_id) {
+        return res.status(403).json({ message: "Você não tem permissão para excluir esta review" });
+      }
+
       await ReviewService.delete(Number(id));
       return res.json({ message: "Review deletada" });
     } catch (err: any) {

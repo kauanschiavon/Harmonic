@@ -28,6 +28,39 @@ export class ReviewRepository {
     .orderBy("create_time", "desc");
   }
 
+  // Reviews de um usuário específico, com dados da música/artista (usado no perfil público)
+  async findByUserIdWithDetails(userId: number) {
+    return await db("reviews")
+      .leftJoin("artist", "reviews.artist_id", "artist.artist_id")
+      .leftJoin("music", "reviews.music_id", "music.music_id")
+      .where("reviews.user_id", userId)
+      .select(
+        "reviews.id",
+        "reviews.user_id",
+        "reviews.music_id",
+        "reviews.artist_id",
+        "reviews.note",
+        "reviews.text",
+        "reviews.create_time",
+        "artist.name as artist_name",
+        "music.title as music_title"
+      )
+      .orderBy("reviews.create_time", "desc");
+  }
+
+  // Verifica se o usuário já avaliou essa música (ou, sem música, esse artista) — evita reviews duplicadas
+  async findByUserAndTarget(userId: number, artistId: string, musicId?: string | null) {
+    const query = db("reviews").where({ user_id: userId, artist_id: artistId });
+
+    if (musicId) {
+      query.andWhere({ music_id: musicId });
+    } else {
+      query.andWhere({ music_id: null });
+    }
+
+    return await query.first();
+  }
+
   // Feed de reviews de todos os usuários, com dados do autor, artista e música (usado na página de Reviews)
   async findAllWithAuthors() {
     return await db("reviews")
@@ -69,10 +102,11 @@ export class ReviewRepository {
   }
 
   async update(id: number, data: Partial<Review>) {
-    return await db("reviews")
-    .where({ id })
-    .update(data);
-
+    const [updated] = await db("reviews")
+      .where({ id })
+      .update(data)
+      .returning("*");
+    return updated;
   }
 
   async delete(id: number) {

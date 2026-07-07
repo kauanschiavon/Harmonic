@@ -23,6 +23,11 @@ export interface CreateReviewData {
     text: string;
 }
 
+export interface UpdateReviewData {
+    note?: number;
+    text?: string;
+}
+
 export const reviewService = {
 
     // GET /reviews/feed — resenhas de todos os usuários, com autor e artista
@@ -34,6 +39,18 @@ export const reviewService = {
     // POST /reviews — cria uma review de uma música (e/ou artista)
     async create(data: CreateReviewData) {
         const response = await api.post("/reviews", data);
+        return response.data;
+    },
+
+    // PATCH /reviews/:id — só o dono da review pode editar (nota e/ou texto)
+    async update(id: number, data: UpdateReviewData) {
+        const response = await api.patch(`/reviews/${id}`, data);
+        return response.data;
+    },
+
+    // DELETE /reviews/:id — só o dono da review pode excluir
+    async delete(id: number) {
+        const response = await api.delete(`/reviews/${id}`);
         return response.data;
     },
 };

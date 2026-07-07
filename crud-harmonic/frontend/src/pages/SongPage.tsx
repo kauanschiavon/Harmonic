@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { reviewService } from "../services/reviewService";
+
+interface RatingDistribution {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+}
 
 interface SongDetail {
     music_id: string;
@@ -14,6 +23,7 @@ interface SongDetail {
     spotify_url: string;
     avg_rating: number | null;
     total_reviews: number;
+    rating_distribution: RatingDistribution;
     reviews: Review[];
 }
 
@@ -44,6 +54,42 @@ function Stars({ rating }: { rating: number }) {
     );
 }
 
+// Estrelas clicáveis, usadas no formulário de criar/editar avaliação
+function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+    return (
+        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+                <span
+                    key={i}
+                    onClick={() => onChange(i)}
+                    style={{ fontSize: 28, cursor: "pointer", color: i <= value ? "#f59e0b" : "#ddd" }}
+                >★</span>
+            ))}
+        </div>
+    );
+}
+
+// Barra de distribuição das notas (quantas reviews deram 1 a 5 estrelas)
+function RatingDistributionChart({ distribution, total }: { distribution: RatingDistribution; total: number }) {
+    return (
+        <div style={s.distributionBox}>
+            {[5, 4, 3, 2, 1].map((star) => {
+                const count = distribution[star as 1 | 2 | 3 | 4 | 5] ?? 0;
+                const pct = total > 0 ? (count / total) * 100 : 0;
+                return (
+                    <div key={star} style={s.distRow}>
+                        <span style={s.distStarLabel}>{star} ★</span>
+                        <div style={s.distBarTrack}>
+                            <div style={{ ...s.distBarFill, width: `${pct}%` }} />
+                        </div>
+                        <span style={s.distCount}>{count}</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function SongPage({
     songId,
     onBack,
@@ -59,13 +105,21 @@ export default function SongPage({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // formulário de avaliação
+    // formulário de avaliação (criar)
     const [note, setNote] = useState(0);
     const [text, setText] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [submitMsg, setSubmitMsg] = useState("");
 
+    // edição de review existente (própria)
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editNote, setEditNote] = useState(0);
+    const [editText, setEditText] = useState("");
+    const [editSubmitting, setEditSubmitting] = useState(false);
+    const [editMsg, setEditMsg] = useState("");
+
     const user = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
+    const myReview = song?.reviews.find((r) => r.user_id === user?.id) ?? null;
 
     useEffect(() => {
         loadSong();
@@ -105,6 +159,43 @@ export default function SongPage({
             setSubmitMsg(err.response?.data?.message ?? "Erro ao publicar avaliação.");
         } finally {
             setSubmitting(false);
+        }
+    }
+
+    function startEdit(r: Review) {
+        setEditingId(r.id);
+        setEditNote(r.note);
+        setEditText(r.text);
+        setEditMsg("");
+    }
+
+    function cancelEdit() {
+        setEditingId(null);
+        setEditMsg("");
+    }
+
+    async function handleUpdateReview(id: number) {
+        if (!editNote) { setEditMsg("Selecione uma nota."); return; }
+        setEditSubmitting(true);
+        setEditMsg("");
+        try {
+            await reviewService.update(id, { note: editNote, text: editText });
+            setEditingId(null);
+            loadSong();
+        } catch (err: any) {
+            setEditMsg(err.response?.data?.message ?? "Erro ao atualizar avaliação.");
+        } finally {
+            setEditSubmitting(false);
+        }
+    }
+
+    async function handleDeleteReview(id: number) {
+        if (!window.confirm("Tem certeza que deseja excluir sua avaliação?")) return;
+        try {
+            await reviewService.delete(id);
+            loadSong();
+        } catch (err: any) {
+            setEditMsg(err.response?.data?.message ?? "Erro ao excluir avaliação.");
         }
     }
 
@@ -164,20 +255,20 @@ export default function SongPage({
                     </div>
                 </div>
 
-                {/* Formulário de avaliação */}
-                {user && (
+                {/* Distribuição das notas */}
+                {song.total_reviews > 0 && (
+                    <section style={s.section}>
+                        <h2 style={s.sectionTitle}>Distribuição das notas</h2>
+                        <RatingDistributionChart distribution={song.rating_distribution} total={song.total_reviews} />
+                    </section>
+                )}
+
+                {/* Formulário de avaliação (só aparece se o usuário ainda não avaliou) */}
+                {user && !myReview && (
                     <section style={s.section}>
                         <h2 style={s.sectionTitle}>Avaliar esta música</h2>
                         <form onSubmit={handleSubmitReview} style={s.form}>
-                            <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                    <span
-                                        key={i}
-                                        onClick={() => setNote(i)}
-                                        style={{ fontSize: 28, cursor: "pointer", color: i <= note ? "#f59e0b" : "#ddd" }}
-                                    >★</span>
-                                ))}
-                            </div>
+                            <StarPicker value={note} onChange={setNote} />
                             <textarea
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
@@ -198,6 +289,20 @@ export default function SongPage({
                     </section>
                 )}
 
+                {/* Aviso de que o usuário já avaliou, com link para editar abaixo */}
+                {user && myReview && editingId !== myReview.id && (
+                    <section style={s.section}>
+                        <div style={s.emptyBox}>
+                            <p style={{ margin: 0, color: "#555" }}>
+                                Você já avaliou esta música.{" "}
+                                <span style={{ color: "#d44800", fontWeight: 700, cursor: "pointer" }} onClick={() => startEdit(myReview)}>
+                                    Editar sua avaliação
+                                </span>
+                            </p>
+                        </div>
+                    </section>
+                )}
+
                 {/* Lista de reviews */}
                 <section style={s.section}>
                     <h2 style={s.sectionTitle}>
@@ -209,23 +314,62 @@ export default function SongPage({
                         </div>
                     ) : (
                         <div style={s.reviewList}>
-                            {song.reviews.map((r) => (
-                                <div key={r.id} style={s.reviewCard}>
-                                    <div style={s.reviewHeader}>
-                                        <span
-                                            style={{ fontWeight: 700, fontSize: 14, cursor: "pointer", color: "#111" }}
-                                            onClick={() => onOpenProfile(r.user_id)}
-                                        >
-                                            {r.username}
-                                        </span>
-                                        <Stars rating={r.note} />
-                                        <span style={{ fontSize: 12, color: "#aaa", marginLeft: "auto" }}>
-                                            {new Date(r.create_time).toLocaleDateString("pt-BR")}
-                                        </span>
+                            {song.reviews.map((r) => {
+                                const isMine = user?.id === r.user_id;
+                                const isEditing = editingId === r.id;
+
+                                return (
+                                    <div key={r.id} style={s.reviewCard}>
+                                        <div style={s.reviewHeader}>
+                                            <span
+                                                style={{ fontWeight: 700, fontSize: 14, cursor: "pointer", color: "#111" }}
+                                                onClick={() => onOpenProfile(r.user_id)}
+                                            >
+                                                {r.username}
+                                            </span>
+                                            {!isEditing && <Stars rating={r.note} />}
+                                            <span style={{ fontSize: 12, color: "#aaa", marginLeft: "auto" }}>
+                                                {new Date(r.create_time).toLocaleDateString("pt-BR")}
+                                            </span>
+                                            {isMine && !isEditing && (
+                                                <span style={s.reviewActions}>
+                                                    <span style={s.reviewActionLink} onClick={() => startEdit(r)}>Editar</span>
+                                                    <span style={s.reviewActionLink} onClick={() => handleDeleteReview(r.id)}>Excluir</span>
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {isEditing ? (
+                                            <div style={{ marginTop: 8 }}>
+                                                <StarPicker value={editNote} onChange={setEditNote} />
+                                                <textarea
+                                                    value={editText}
+                                                    onChange={(e) => setEditText(e.target.value)}
+                                                    style={s.textarea}
+                                                    rows={3}
+                                                    maxLength={1000}
+                                                />
+                                                {editMsg && <p style={{ fontSize: 13, color: "red", margin: "4px 0" }}>{editMsg}</p>}
+                                                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                                    <button
+                                                        type="button"
+                                                        disabled={editSubmitting}
+                                                        style={s.submitBtn}
+                                                        onClick={() => handleUpdateReview(r.id)}
+                                                    >
+                                                        {editSubmitting ? "Salvando…" : "Salvar"}
+                                                    </button>
+                                                    <button type="button" style={s.cancelBtn} onClick={cancelEdit}>
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            r.text && <p style={s.reviewText}>{r.text}</p>
+                                        )}
                                     </div>
-                                    {r.text && <p style={s.reviewText}>{r.text}</p>}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>
@@ -261,4 +405,13 @@ const s: Record<string, React.CSSProperties> = {
     reviewCard: { border: "1px solid #eee", borderRadius: 10, padding: "14px 18px" },
     reviewHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 6 },
     reviewText: { fontSize: 14, color: "#444", margin: 0, lineHeight: 1.6 },
+    reviewActions: { display: "flex", gap: 10, marginLeft: 8 },
+    reviewActionLink: { fontSize: 12, color: "#d44800", fontWeight: 700, cursor: "pointer" },
+    cancelBtn: { background: "#fff", color: "#555", border: "1px solid #ddd", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 700, cursor: "pointer", alignSelf: "flex-start" },
+    distributionBox: { display: "flex", flexDirection: "column", gap: 8, maxWidth: 420 },
+    distRow: { display: "flex", alignItems: "center", gap: 10 },
+    distStarLabel: { fontSize: 13, color: "#555", width: 34, flexShrink: 0 },
+    distBarTrack: { flex: 1, height: 10, borderRadius: 6, background: "#f0f0f0", overflow: "hidden" },
+    distBarFill: { height: "100%", background: "#f59e0b", borderRadius: 6 },
+    distCount: { fontSize: 13, color: "#888", width: 24, textAlign: "right", flexShrink: 0 },
 };

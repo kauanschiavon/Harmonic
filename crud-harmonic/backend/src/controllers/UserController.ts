@@ -52,7 +52,7 @@ export class UserController {
                 });
             }
 
-            const reviews = await reviewRepository.findByUserId(Number(id));
+            const reviews = await reviewRepository.findByUserIdWithDetails(Number(id));
 
             return res.status(200).json({
                 ...user,

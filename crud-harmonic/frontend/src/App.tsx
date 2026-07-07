@@ -45,6 +45,7 @@ export default function App() {
                 onBack={() => setView("home")}
                 onOpenReviews={() => setView("reviews")}
                 onOpenProfile={openProfile}
+                onOpenSong={openSong}
                 onLogout={handleLogout}
             />
         );
@@ -55,6 +56,7 @@ export default function App() {
             <ReviewsPage
                 onBack={() => setView("home")}
                 onOpenProfile={openProfile}
+                onOpenSong={openSong}
                 onLogout={handleLogout}
             />
         );

@@ -25,3 +25,17 @@ export const reviewSchema = z.object({
     .min(1)
     .max(5),
 });
+
+// validação para edição: só nota e texto podem ser alterados
+export const reviewUpdateSchema = z.object({
+  text: z
+    .string()
+    .max(1000)
+    .optional(),
+
+  note: z
+    .number()
+    .min(1)
+    .max(5)
+    .optional(),
+});

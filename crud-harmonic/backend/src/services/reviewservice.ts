@@ -1,7 +1,7 @@
 import { ReviewRepository } from "../repositories/ReviewRepository";
 import { ArtistRepository } from "../repositories/ArtistRepository";
 import { MusicRepository } from "../repositories/MusicRepository";
-import { reviewSchema } from "../schemas/ReviewSchema";
+import { reviewSchema, reviewUpdateSchema } from "../schemas/ReviewSchema";
 import { getArtist, getTrack } from "./spotifyService";
 
 export class ReviewService {
@@ -11,6 +11,21 @@ export class ReviewService {
 
   static async create(data: unknown) {
     const validatedData = reviewSchema.parse(data);
+
+    // Impede que o usuário avalie a mesma música (ou o mesmo artista, sem música) mais de uma vez
+    const existingReview = await ReviewService.repository.findByUserAndTarget(
+      validatedData.user_id,
+      validatedData.artist_id,
+      validatedData.music_id ?? null
+    );
+
+    if (existingReview) {
+      throw new Error(
+        validatedData.music_id
+          ? "Você já avaliou esta música. Edite sua avaliação existente."
+          : "Você já avaliou este artista. Edite sua avaliação existente."
+      );
+    }
 
     // Garante que o artista existe na tabela local "artist" (busca no Spotify se precisar criar)
     let artist = await ReviewService.artistRepository.findByArtistId(validatedData.artist_id);
@@ -58,8 +73,9 @@ export class ReviewService {
     return await ReviewService.repository.findAllWithAuthors();
   }
 
-  static async update(id: number, data: any) {
-    return await ReviewService.repository.update(id, data);
+  static async update(id: number, data: unknown) {
+    const validatedData = reviewUpdateSchema.parse(data);
+    return await ReviewService.repository.update(id, validatedData);
   }
 
   static async delete(id: number) {
