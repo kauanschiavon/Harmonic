@@ -5,7 +5,6 @@ const reviewRepository = new ReviewRepository();
 
 export class SongService {
 
-  // Busca detalhes de uma música no Spotify + reviews/nota média salvas localmente
   static async getSongDetail(spotifyTrackId: string) {
     const track = await getTrack(spotifyTrackId);
 
@@ -20,7 +19,7 @@ export class SongService {
       ? reviews.reduce((sum: number, r: any) => sum + Number(r.note), 0) / total_reviews
       : null;
 
-    // Distribuição das notas: quantas reviews existem para cada nota de 1 a 5 estrelas
+    // quantas reviews existem para cada nota de 1 a 5 estrelas
     const rating_distribution: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     for (const r of reviews as any[]) {
       const rounded = Math.min(5, Math.max(1, Math.round(Number(r.note)))) as 1 | 2 | 3 | 4 | 5;

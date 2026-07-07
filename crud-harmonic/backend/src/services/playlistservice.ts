@@ -11,19 +11,17 @@ export class PlaylistService {
   private static repository = new PlaylistRepository();
   private static musicRepository = new MusicRepository();
 
-  //create 
   static async create(data: unknown) {
     const validated = createPlaylistSchema.parse(data);
 
     return await PlaylistService.repository.create(validated);
   }
 
-//list por user
   static async listByUser(userId: number) {
     return await PlaylistService.repository.findByUser(userId);
   }
 
-  // feed público — todas as playlists com dados do autor (usado na página de Lists)
+  // feed público
   static async findAll() {
     return await PlaylistService.repository.findAllWithAuthors();
   }
@@ -37,7 +35,6 @@ export class PlaylistService {
     return { ...playlist, musics };
   }
 
-  //update 
   static async update(id: number, data: unknown) {
     const validated = updatePlaylistSchema.parse(data);
 
@@ -47,12 +44,10 @@ export class PlaylistService {
     return await PlaylistService.repository.update(id, validated);
   }
 
-  //delete
   static async delete(id: number, userId: number) {
     const playlist = await PlaylistService.repository.findById(id);
     if (!playlist) throw new Error("Playlist não encontrada");
 
-    // só o dono pode excluir
     if (playlist.user_id !== userId) {
       throw new Error("Sem permissão para excluir esta playlist");
     }
@@ -61,7 +56,6 @@ export class PlaylistService {
     return { message: "Playlist excluída com sucesso" };
   }
 
-  //add music
   static async addMusic(playlistId: number, data: unknown) {
     const validated = addMusicSchema.parse(data);
 
@@ -75,14 +69,12 @@ export class PlaylistService {
       duration_ms: validated.duration_ms,
     });
 
-    // música já está na playlist?
     const existing = await PlaylistService.repository.findMusic(
       playlistId,
       validated.music_id
     );
     if (existing) throw new Error("Música já está nesta playlist");
 
-    // posição: usa a informada ou coloca no final
     const lastPosition = await PlaylistService.repository.getLastPosition(playlistId);
     const position = validated.position ?? lastPosition + 1;
 
@@ -93,7 +85,6 @@ export class PlaylistService {
     );
   }
 
-  //remove
   static async removeMusic(playlistId: number, musicId: string) {
     const playlist = await PlaylistService.repository.findById(playlistId);
     if (!playlist) throw new Error("Playlist não encontrada");
@@ -105,7 +96,6 @@ export class PlaylistService {
     return { message: "Música removida da playlist" };
   }
 
-//reordena
   static async reorder(playlistId: number, data: unknown) {
     const validated = reorderSchema.parse(data);
 

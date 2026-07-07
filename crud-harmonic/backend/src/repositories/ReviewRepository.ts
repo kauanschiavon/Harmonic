@@ -21,14 +21,14 @@ export class ReviewRepository {
     .first();
   }
 
-  // Reviews feitas por um usuário específico (usado no perfil público)
+  // Reviews feitas por um usuário 
   async findByUserId(userId: number) {
     return await db("reviews")
     .where({ user_id: userId })
     .orderBy("create_time", "desc");
   }
 
-  // Reviews de um usuário específico, com dados da música/artista (usado no perfil público)
+  // Reviews de um usuário específico
   async findByUserIdWithDetails(userId: number) {
     return await db("reviews")
       .leftJoin("artist", "reviews.artist_id", "artist.artist_id")
@@ -48,7 +48,7 @@ export class ReviewRepository {
       .orderBy("reviews.create_time", "desc");
   }
 
-  // Verifica se o usuário já avaliou essa música (ou, sem música, esse artista) — evita reviews duplicadas
+  // Verifica se o usuário já avaliou essa música 
   async findByUserAndTarget(userId: number, artistId: string, musicId?: string | null) {
     const query = db("reviews").where({ user_id: userId, artist_id: artistId });
 
@@ -61,7 +61,7 @@ export class ReviewRepository {
     return await query.first();
   }
 
-  // Feed de reviews de todos os usuários, com dados do autor, artista e música (usado na página de Reviews)
+  // Feed de reviews de todos os usuários, com dados do autor, artista e música
   async findAllWithAuthors() {
     return await db("reviews")
       .join("users", "reviews.user_id", "users.id")
@@ -84,7 +84,7 @@ export class ReviewRepository {
       .orderBy("reviews.create_time", "desc");
   }
 
-  // Reviews de uma música específica, com dados do autor (usado na SongPage)
+  // Reviews de uma música específica
   async findByMusicIdWithAuthors(musicId: string) {
     return await db("reviews")
       .join("users", "reviews.user_id", "users.id")

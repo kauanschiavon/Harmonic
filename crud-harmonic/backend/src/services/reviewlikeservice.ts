@@ -9,7 +9,6 @@ export class ReviewLikeService {
   static async like(reviewId: number, data: unknown) {
     const { user_id } = reviewLikeSchema.parse(data);
 
-    // review existe?
     const review = await ReviewLikeService.reviewRepository.findById(reviewId);
     if (!review) throw new Error("Review não encontrada");
 
@@ -18,7 +17,6 @@ export class ReviewLikeService {
       throw new Error("Você não pode curtir sua própria review");
     }
 
-    // já curtiu?
     const existing = await ReviewLikeService.repository.findOne(user_id, reviewId);
     if (existing) throw new Error("Você já curtiu esta review");
 

@@ -2,7 +2,6 @@ import { getAlbum } from "./spotifyService";
 
 export class AlbumService {
 
-  // Busca detalhes de um álbum no Spotify, incluindo a lista de faixas
   static async getAlbumDetail(spotifyAlbumId: string) {
     const album = await getAlbum(spotifyAlbumId);
 

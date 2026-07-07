@@ -12,7 +12,6 @@ router.get("/playlists/:id", controller.getById);
 router.patch("/playlists/:id", controller.update);
 router.delete("/playlists/:id", controller.delete);
 
-
 //musica da playlist
 router.post("/playlists/:id/:musics", controller.addMusic);
 router.delete("/playlists/:id/musics/:musicId", controller.removeMusic);

@@ -12,14 +12,13 @@ export class AuthService {
 
   static async register(data: any) {
 
-    // 1. validação
+    // validação
 
     const validatedData = registerSchema.parse(data);
     
 
     const { username, email, password } = validatedData;
 
-    // 2. email já existe?
     const userRepository = new UserRepository();
     
     const emailExists =
@@ -29,7 +28,6 @@ export class AuthService {
       throw new Error("Email já cadastrado");
     }
 
-    // 3. username já existe?
     const usernameExists =
       await userRepository.findByUsername(username);
 
@@ -37,11 +35,9 @@ export class AuthService {
       throw new Error("Username já está em uso");
     }
 
-    // 4. hash da senha
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    // 5. cria usuário
     const user = await userRepository.create({
       username,
       email,
@@ -97,18 +93,12 @@ export class AuthService {
     };
   }
   static async forgotPassword(data:any){
-    //recebe os dados e valida no zod v 
     const {email} = forgotPasswordSchema.parse(data);
 
     const userRepository = new UserRepository();
     const passwordresetRepository = new PasswordResetRepository();
 
     const user = await userRepository.findByEmail(email)
-
-          // IMPORTANTE: não revelar se o e-mail existe ou não.
-    // Sempre retorna a mesma mensagem de sucesso, mesmo se o
-    // usuário não for encontrado — evita que alguém descubra
-    // quais e-mails estão cadastrados no sistema.
 
     if(!user){
       return {message: "Se o email existir, um link de redefinição foi enviado."}

@@ -12,7 +12,7 @@ export const reviewService = {
   async create(data: unknown) {
     const validatedData = reviewSchema.parse(data);
 
-    // Impede que o usuário avalie a mesma música (ou o mesmo artista) mais de uma vez
+    // Impede que o usuário avalie a mesma música mais de uma vez
     const existingReview = await reviewRepository.findByUserAndTarget(
       validatedData.user_id,
       validatedData.artist_id,
@@ -27,7 +27,6 @@ export const reviewService = {
       );
     }
 
-    // Garante que o artista exista no banco local
     let artist = await artistRepository.findByArtistId(validatedData.artist_id);
 
     if (!artist) {
@@ -40,7 +39,6 @@ export const reviewService = {
       });
     }
 
-    // Garante que a música exista no banco local
     if (validatedData.music_id) {
       const music = await musicRepository.findByMusicId(validatedData.music_id);
 
@@ -69,7 +67,6 @@ export const reviewService = {
     return await reviewRepository.findAll();
   },
 
-  // Feed de reviews com autor, artista e música
   async getFeed() {
     return await reviewRepository.findAllWithAuthors();
   },
