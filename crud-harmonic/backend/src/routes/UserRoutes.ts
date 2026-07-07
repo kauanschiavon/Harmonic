@@ -48,7 +48,7 @@ router.get("/search", async (req, res) => {
   });
 });
 
-// rota consultar dados do artista(implementar) router.get("artist/:id) 
+// rota consultar dados do artista
 
 router.post("/users", controller.create);
 
@@ -58,13 +58,13 @@ router.post("/forgot-password", controller.forgotPassword)
 
 router.post("/reset-password", controller.resetPassword)
 
-// lista completa de usuários (com email) só pode ser vista por admins
+// lista completa de usuários só pode ser vista por admins
 router.get("/users", authMiddleware, adminMiddleware, controller.findAll);
 
-// perfil público de qualquer usuário (visível para outros usuários)
+// perfil público de qualquer usuário 
 router.get("/users/:id", controller.getProfile);
 
-// só o dono da conta (ou um admin) pode editar
+// só o dono da conta pode editar
 router.patch("/users/:id", authMiddleware, ownerOrAdminMiddleware, controller.update);
 
 // só admin pode excluir usuários

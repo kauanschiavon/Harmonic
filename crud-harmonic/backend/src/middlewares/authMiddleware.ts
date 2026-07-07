@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-// Estende o tipo Request do Express para incluir os dados do usuário autenticado,
-// preenchidos a partir do token JWT.
 declare global {
   namespace Express {
     interface Request {
@@ -14,12 +12,7 @@ declare global {
   }
 }
 
-/**
- * Middleware de autenticação.
- * Verifica se o header "Authorization: Bearer <token>" contém um JWT válido.
- * Se válido, popula req.user com { id, role } e segue para a próxima rota.
- * Se ausente ou inválido, responde 401 e interrompe a requisição.
- */
+
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
@@ -37,7 +30,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
     req.user = {
       id: payload.id,
-      // Tokens antigos podem não ter "role" — assume "user" por segurança (nunca eleva privilégio).
       role: payload.role ?? "user",
     };
 
@@ -47,11 +39,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 }
 
-/**
- * Middleware de autorização (admin).
- * Deve ser usado SEMPRE depois do authMiddleware na cadeia de middlewares.
- * Bloqueia a requisição com 403 se o usuário autenticado não for admin.
- */
+
 export function adminMiddleware(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ message: "Token de autenticação ausente" });
@@ -64,11 +52,7 @@ export function adminMiddleware(req: Request, res: Response, next: NextFunction)
   return next();
 }
 
-/**
- * Middleware de autorização (dono do recurso OU admin).
- * Usa o :id da rota e compara com req.user.id. Admins passam sempre.
- * Deve ser usado depois do authMiddleware.
- */
+
 export function ownerOrAdminMiddleware(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ message: "Token de autenticação ausente" });

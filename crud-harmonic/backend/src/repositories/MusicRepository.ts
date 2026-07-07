@@ -15,11 +15,6 @@ export class MusicRepository {
         return created;
     }
 
-    /*
-     * Garante que a música existe no banco local.
-     * Se já existir (pelo music_id do Spotify), retorna a existente.
-     * Se não existir, cria e retorna o novo registro.
-     */
     async findOrCreate(music: Music): Promise<Music> {
         const existing = await this.findByMusicId(music.music_id);
         if (existing) return existing;
