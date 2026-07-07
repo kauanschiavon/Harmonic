@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { userService, type UserProfile, type Review, type User } from "../services/userService";
 import { followService, type FollowStats, type FollowUser } from "../services/followService";
+import { reviewService } from "../services/reviewService";
 import { playlistService, type Playlist } from "../services/playlistService";
 import { EditUserModal } from "./UsersPage";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -12,6 +13,7 @@ export default function ProfilePage({
     onOpenReviews,
     onOpenLists,
     onOpenProfile,
+    onOpenSong,
     onOpenPlaylist,
     onLogout,
 }: {
@@ -21,6 +23,7 @@ export default function ProfilePage({
     onOpenReviews: () => void;
     onOpenLists: () => void;
     onOpenProfile: (userId: number) => void;
+    onOpenSong?: (songId: string) => void;
     onOpenPlaylist: (playlistId: number) => void;
     onLogout: () => void;
 }) {
@@ -142,7 +145,6 @@ export default function ProfilePage({
                 </div>
                 <div style={s.navLinks}>
                     <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
-                    <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
                     <span style={s.navLink} onClick={onOpenLists}>📋 Playlists</span>
                     <span style={s.navLinkActive}>👤 {isOwnProfile ? "Meu perfil" : profile?.username ?? "Perfil"}</span>
@@ -272,7 +274,31 @@ export default function ProfilePage({
                             ) : (
                                 <div style={s.reviewList}>
                                     {profile.reviews.map((review) => (
-                                        <ReviewCard key={review.id} review={review} />
+                                        <ReviewCard
+                                            key={review.id}
+                                            review={review}
+                                            canEdit={isOwnProfile}
+                                            onOpenSong={onOpenSong}
+                                            onUpdated={(updated) =>
+                                                setProfile((prev) =>
+                                                    prev
+                                                        ? {
+                                                              ...prev,
+                                                              reviews: prev.reviews.map((r) =>
+                                                                  r.id === review.id ? { ...r, ...updated } : r
+                                                              ),
+                                                          }
+                                                        : prev
+                                                )
+                                            }
+                                            onDeleted={() =>
+                                                setProfile((prev) =>
+                                                    prev
+                                                        ? { ...prev, reviews: prev.reviews.filter((r) => r.id !== review.id) }
+                                                        : prev
+                                                )
+                                            }
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -332,18 +358,115 @@ export default function ProfilePage({
     );
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({
+    review,
+    canEdit,
+    onOpenSong,
+    onUpdated,
+    onDeleted,
+}: {
+    review: Review;
+    canEdit: boolean;
+    onOpenSong?: (songId: string) => void;
+    onUpdated: (updated: Partial<Review>) => void;
+    onDeleted: () => void;
+}) {
     const date = review.create_time
         ? new Date(review.create_time).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
         : null;
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [note, setNote] = useState(review.note);
+    const [text, setText] = useState(review.text);
+    const [submitting, setSubmitting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
+
+    function startEdit() {
+        setNote(review.note);
+        setText(review.text);
+        setErrorMsg("");
+        setIsEditing(true);
+    }
+
+    async function handleSave() {
+        if (!note) { setErrorMsg("Selecione uma nota."); return; }
+        setSubmitting(true);
+        setErrorMsg("");
+        try {
+            await reviewService.update(review.id, { note, text });
+            onUpdated({ note, text });
+            setIsEditing(false);
+        } catch (err: any) {
+            setErrorMsg(err.response?.data?.message ?? "Erro ao atualizar avaliação.");
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function handleDelete() {
+        if (!window.confirm("Tem certeza que deseja excluir esta avaliação?")) return;
+        try {
+            await reviewService.delete(review.id);
+            onDeleted();
+        } catch (err: any) {
+            setErrorMsg(err.response?.data?.message ?? "Erro ao excluir avaliação.");
+        }
+    }
+
     return (
         <div style={s.reviewCard}>
+            {(review.music_title || review.artist_name) && (
+                <p
+                    style={{
+                        ...s.reviewAbout,
+                        cursor: review.music_id && onOpenSong ? "pointer" : "default",
+                    }}
+                    onClick={() => review.music_id && onOpenSong?.(review.music_id)}
+                >
+                    {review.music_title
+                        ? `🎵 ${review.music_title}${review.artist_name ? ` · ${review.artist_name}` : ""}`
+                        : `🎤 ${review.artist_name}`}
+                </p>
+            )}
             <div style={s.reviewTop}>
-                <Stars note={review.note} />
-                {date && <span style={s.reviewDate}>{date}</span>}
+                {isEditing ? (
+                    <StarPickerSmall value={note} onChange={setNote} />
+                ) : (
+                    <Stars note={review.note} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+                    {date && !isEditing && <span style={s.reviewDate}>{date}</span>}
+                    {canEdit && !isEditing && (
+                        <span style={s.reviewActions}>
+                            <span style={s.reviewActionLink} onClick={startEdit}>Editar</span>
+                            <span style={s.reviewActionLink} onClick={handleDelete}>Excluir</span>
+                        </span>
+                    )}
+                </div>
             </div>
-            <p style={s.reviewText}>{review.text}</p>
+
+            {isEditing ? (
+                <div>
+                    <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        style={s.editTextarea}
+                        rows={3}
+                        maxLength={1000}
+                    />
+                    {errorMsg && <p style={{ fontSize: 13, color: "red", margin: "4px 0" }}>{errorMsg}</p>}
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        <button type="button" disabled={submitting} style={s.saveBtn} onClick={handleSave}>
+                            {submitting ? "Salvando…" : "Salvar"}
+                        </button>
+                        <button type="button" style={s.cancelBtn} onClick={() => setIsEditing(false)}>
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <p style={s.reviewText}>{review.text}</p>
+            )}
         </div>
     );
 }
@@ -353,6 +476,21 @@ function Stars({ note }: { note: number }) {
         <div style={{ display: "flex", gap: 2 }} title={`${note}/5`}>
             {Array.from({ length: 5 }).map((_, i) => (
                 <span key={i} style={{ color: i < note ? "#d44800" : "#e2e2e2", fontSize: 15, lineHeight: 1 }}>★</span>
+            ))}
+        </div>
+    );
+}
+
+// Estrelas clicáveis usadas na edição inline da review no perfil
+function StarPickerSmall({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+    return (
+        <div style={{ display: "flex", gap: 4 }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+                <span
+                    key={i}
+                    onClick={() => onChange(i)}
+                    style={{ fontSize: 20, cursor: "pointer", color: i <= value ? "#d44800" : "#e2e2e2" }}
+                >★</span>
             ))}
         </div>
     );
@@ -393,9 +531,15 @@ const s: Record<string, React.CSSProperties> = {
     privateTag: { fontSize: 11, color: "#888", background: "#f0f0f0", padding: "2px 8px", borderRadius: 10, marginTop: 4, display: "inline-block" },
     reviewList: { display: "flex", flexDirection: "column", gap: 12 },
     reviewCard: { border: "1px solid #eee", borderRadius: 12, padding: 18 },
+    reviewAbout: { fontSize: 13, fontWeight: 700, color: "#555", margin: "0 0 8px" },
     reviewTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
     reviewDate: { fontSize: 12, color: "#aaa" },
     reviewText: { fontSize: 14, color: "#333", margin: 0, lineHeight: 1.5 },
+    reviewActions: { display: "flex", gap: 10 },
+    reviewActionLink: { fontSize: 12, color: "#d44800", fontWeight: 700, cursor: "pointer" },
+    editTextarea: { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "Inter, sans-serif", boxSizing: "border-box" },
+    saveBtn: { background: "#d44800", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+    cancelBtn: { background: "#fff", color: "#555", border: "1px solid #ddd", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
 
     emptyBox: { border: "1.5px dashed #ddd", borderRadius: 12, padding: 32, textAlign: "center" },
     retryBtn: { marginTop: 12, border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#111" },

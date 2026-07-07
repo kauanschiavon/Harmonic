@@ -94,6 +94,7 @@ export default function App() {
                 onOpenReviews={openReviews}
                 onOpenLists={openLists}
                 onOpenProfile={openProfile}
+                onOpenSong={openSong}
                 onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />
@@ -119,6 +120,7 @@ export default function App() {
                 onGoHome={goHome}
                 onOpenReviews={openReviews}
                 onOpenProfile={openProfile}
+                onOpenSong={openSong}
                 onOpenPlaylist={openPlaylist}
                 onLogout={handleLogout}
             />

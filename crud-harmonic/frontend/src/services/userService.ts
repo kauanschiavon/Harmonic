@@ -34,6 +34,8 @@ export interface Review {
     note: number;
     text: string;
     create_time: string;
+    artist_name?: string | null;
+    music_title?: string | null;
 }
 
 export interface UserProfile {
