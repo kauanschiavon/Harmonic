@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 interface SongDetail {
     music_id: string;
@@ -47,11 +48,13 @@ function Stars({ rating }: { rating: number }) {
 export default function SongPage({
     songId,
     onBack,
+    onGoHome,
     onOpenProfile,
     onLogout,
 }: {
     songId: string;
     onBack: () => void;
+    onGoHome: () => void;
     onOpenProfile: (userId: number) => void;
     onLogout: () => void;
 }) {
@@ -64,6 +67,7 @@ export default function SongPage({
     const [text, setText] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [submitMsg, setSubmitMsg] = useState("");
+    const [confirmLogout, setConfirmLogout] = useState(false);
 
     const user = JSON.parse(localStorage.getItem("harmonic_user") ?? "null");
 
@@ -115,7 +119,12 @@ export default function SongPage({
     }
 
     if (loading) return <div style={s.page}><p style={{ padding: 32, color: "#888" }}>Carregando…</p></div>;
-    if (error || !song) return <div style={s.page}><p style={{ padding: 32, color: "red" }}>{error}</p></div>;
+    if (error || !song) return (
+        <div style={s.page}>
+            <p style={{ padding: 32, color: "red" }}>{error}</p>
+            <button onClick={onBack} style={{ ...s.backBtn, margin: "0 32px" }} title="Voltar">← Voltar</button>
+        </div>
+    );
 
     return (
         <div style={s.page}>
@@ -128,11 +137,22 @@ export default function SongPage({
                     </span>
                 </div>
                 <div style={s.navLinks}>
-                    <span style={s.navLink} onClick={onBack}>🏠 Home</span>
+                    <span style={s.navLink} onClick={onGoHome}>🏠 Home</span>
                     <span style={s.navLink} onClick={() => user?.id && onOpenProfile(user.id)}>👤 {user?.username ?? "Profile"}</span>
                 </div>
-                <button onClick={handleLogout} style={s.logoutBtn} title="Sair">↪</button>
+                <div style={s.navRight}>
+                    <button onClick={onBack} style={s.backBtn} title="Voltar">← Voltar</button>
+                    <button onClick={() => setConfirmLogout(true)} style={s.logoutBtn} title="Sair">↪</button>
+                </div>
             </nav>
+
+            <ConfirmDialog
+                open={confirmLogout}
+                title="Sair da conta"
+                message="Tem certeza que deseja sair da sua conta?"
+                onConfirm={handleLogout}
+                onCancel={() => setConfirmLogout(false)}
+            />
 
             <main style={s.main}>
                 {/* Cabeçalho da música */}
@@ -240,6 +260,8 @@ const s: Record<string, React.CSSProperties> = {
     logoRow: { display: "flex", alignItems: "center", gap: 8 },
     navLinks: { display: "flex", gap: 24, flex: 1, justifyContent: "center" },
     navLink: { color: "#555", fontSize: 14, cursor: "pointer" },
+    navRight: { display: "flex", alignItems: "center", gap: 12 },
+    backBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700, color: "#111" },
     logoutBtn: { border: "1px solid #ddd", background: "#fff", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 14 },
     main: { padding: "32px 32px 64px", maxWidth: 860, margin: "0 auto" },
     header: { display: "flex", gap: 32, marginBottom: 48, alignItems: "flex-start" },
