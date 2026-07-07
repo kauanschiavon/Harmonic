@@ -141,7 +141,6 @@ export default function ListsPage({
                 </div>
                 <div style={s.navLinks}>
                     <span style={s.navLink} onClick={onBack}>🏠 Home</span>
-                    <span style={s.navLink}>🎵 Tracks</span>
                     <span style={s.navLink} onClick={onOpenReviews}>📝 Reviews</span>
                     <span style={s.navLinkActive}>📋 Playlists</span>
                     <span style={s.navLink} onClick={() => loggedUser?.id && onOpenProfile(loggedUser.id)}>
