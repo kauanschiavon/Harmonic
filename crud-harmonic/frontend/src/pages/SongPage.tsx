@@ -1,6 +1,8 @@
 import { reviewService } from "../services/reviewService";
 import { playlistService, type Playlist } from "../services/playlistService";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useEffect, useState, useMemo } from "react";
+import api from "../services/api";
 
 interface RatingDistribution {
     1: number;
@@ -136,8 +138,9 @@ export default function SongPage({
         try {
             const { data } = await api.get(`/songs/${songId}`);
             setSong(data);
-        } catch {
-            setError("Não foi possível carregar os detalhes da música.");
+        } catch (err) {
+            console.error(err);
+            setError("Não foi possível carregar a música");
         } finally {
             setLoading(false);
         }
