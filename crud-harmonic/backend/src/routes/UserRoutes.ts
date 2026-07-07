@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { UserController } from "../controllers/UserController";
+import { authMiddleware, adminMiddleware, ownerOrAdminMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -57,13 +58,16 @@ router.post("/forgot-password", controller.forgotPassword)
 
 router.post("/reset-password", controller.resetPassword)
 
-router.get("/users", controller.findAll);
+// lista completa de usuários (com email) só pode ser vista por admins
+router.get("/users", authMiddleware, adminMiddleware, controller.findAll);
 
 // perfil público de qualquer usuário (visível para outros usuários)
 router.get("/users/:id", controller.getProfile);
 
-router.patch("/users/:id", controller.update);
+// só o dono da conta (ou um admin) pode editar
+router.patch("/users/:id", authMiddleware, ownerOrAdminMiddleware, controller.update);
 
-router.delete("/users/:id", controller.delete);
+// só admin pode excluir usuários
+router.delete("/users/:id", authMiddleware, adminMiddleware, controller.delete);
 
 export default router;
